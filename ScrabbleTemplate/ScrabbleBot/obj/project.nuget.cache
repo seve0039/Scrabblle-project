@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "roznxY/WhkLHKeuZuooFFacSeavLx2aJavJX7Xg8IZVgvWWScvhrlMiz9hbM5fsf66bJjiuWph+Zpvdom2oKTw==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\sevem\\Desktop\\SWU\\FYP\\Scrable  project\\ScrabbleTemplate\\ScrabbleTemplate\\ScrabbleBot\\ScrabbleBot.fsproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\sevem\\.nuget\\packages\\fparsec\\1.1.1\\fparsec.1.1.1.nupkg.sha512",
+    "C:\\Users\\sevem\\.nuget\\packages\\fsharp.core\\7.0.200\\fsharp.core.7.0.200.nupkg.sha512"
+  ],
+  "logs": []
+}
