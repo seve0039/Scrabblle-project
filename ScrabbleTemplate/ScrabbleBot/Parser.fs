@@ -100,32 +100,21 @@ module internal Parser
     let parseBoardProg _ = failwith "not implemented"
     
 
-    type coord  = int * int 
     type word   = (char * int) list
     
     type squareFun = word -> int -> int -> Result<int, Error>
     type square = Map<int, squareFun>
     
     type boardFun = coord -> Result<square option, Error>
-    type boardFun2 = coord -> Result<square option, Error>
+    
     type board = {
         center        : coord
         defaultSquare : square
         squares       : boardFun
     }
-   
-    type squareProg = Map<int, string>
-    type boardProg  = {
-            prog       : string;
-            squares    : Map<int, squareProg>
-            usedSquare : int
-            center     : coord
     
-            isInfinite : bool   // For pretty-printing purposes only
-            ppSquare   : string // For pretty-printing purposes only
-        }
+    type boardFun2 = coord -> Result<square option, Error>
     
-   
     let mkBoard : boardProg -> board = fun _ -> {center = (0,0); defaultSquare = Map.empty; squares = fun _ -> Success (Some Map.empty)}
     // Default (unusable) board in case you are not implementing a parser for the DSL.
     
