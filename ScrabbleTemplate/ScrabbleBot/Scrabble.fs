@@ -73,11 +73,12 @@ module Scrabble =
 
             let msg = recv cstream
             debugPrint (sprintf "Player %d <- Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
-
+            printfn "DU ER SÅ SEJ MATE %s" (st.board.ToString())
             match msg with
             | RCM (CMPlaySuccess(ms, points, newPieces)) ->
                 (* Successful play by you. Update your state (remove old tiles, add the new ones, change turn, etc) *)
                 let st' = st // This state needs to be updated
+                debugPrint(st'.board.ToString())
                 aux st'
             | RCM (CMPlayed (pid, ms, points)) ->
                 (* Successful play by other player. Update your state *)
@@ -86,6 +87,7 @@ module Scrabble =
             | RCM (CMPlayFailed (pid, ms)) ->
                 (* Failed play. Update your state *)
                 let st' = st // This state needs to be updated
+                debugPrint(sprintf "Du er pis mate" + st'.board.ToString())
                 aux st'
             | RCM (CMGameOver _) -> ()
             | RCM a -> failwith (sprintf "not implmented: %A" a)
