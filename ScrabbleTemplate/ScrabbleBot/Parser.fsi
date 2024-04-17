@@ -17,4 +17,4 @@ module internal Parser
         squares       : boardFun2
     }
 
-    val mkBoard : boardProg -> board
+    val mkBoard: boardProg -> board
