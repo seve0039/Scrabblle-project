@@ -40,7 +40,7 @@ let main argv =
     let handSize   = 7u
     let timeout    = None
     let tiles      = ScrabbleUtil.English.tiles 1u
-    let seed       = None
+    let seed       = Some 42
     let port       = 13001
 
     let dictAPI =
@@ -52,7 +52,7 @@ let main argv =
     
     let (dictionary, time) =
         time (fun () -> ScrabbleUtil.Dictionary.mkDict words dictAPI)
-    let players    = [("Rubert",dictionary, Rubert.Scrabble.startGame);("Lene",dictionary, Rubert.Scrabble.startGame)]
+    let players    = [("Rubert",dictionary, Rubert.Scrabble.startGame);("Lene",dictionary, Oxyphenbutazone.Scrabble.startGame)]
     //let players    = [("Player1", dictionary, Rubert.Scrabble.startGame);("Player2", dictionary, Rubert.Scrabble.startGame)]
 
     //let players = spawnMultiples "OxyphenButazone" dictionary Oxyphenbutazone.Scrabble.startGame 2
