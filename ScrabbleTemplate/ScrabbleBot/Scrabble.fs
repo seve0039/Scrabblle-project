@@ -42,19 +42,18 @@ module State =
     // information, such as number of players, player turn, etc.
 
     type state = {
-        board         : Parser.board
-        dict          : ScrabbleUtil.Dictionary.Dict
-        numPlayers    : uint32
-        playerNumber  : uint32
-        playerTurn    : uint32
-        hand          : MultiSet.MultiSet<uint32>
-        
-    }
-
-    let mkState b d pn np pt h= {board = b; dict = d; numPlayers = np; playerNumber = pn; playerTurn = pt; hand = h}
+            playerNumber  : uint32
+            hand          : MultiSet.MultiSet<uint32>
+            board         : boardProg
+            boardState    : Map<coord, (char * int)>
+            numPlayers    : uint32
+            playerTurn    : uint32
+        }
+    let mkState pn h b num board pTurn = {playerNumber = pn; hand = h; boardState = b; numPlayers = num; board = board; playerTurn = pTurn}
+    //let mkState b d pn np pt h= {board = b; dict = d; numPlayers = np; playerNumber = pn; playerTurn = pt; hand = h}
 
     let board st         = st.board
-    let dict st          = st.dict
+    //let dict st          = st.dict
     
     let playerNumber st  = st.playerNumber
     let playerTurn st    = st.playerTurn
@@ -68,10 +67,9 @@ module Scrabble =
     let playGame cstream pieces (st : State.state) =
 
         let rec aux (st : State.state) (shouldPlay: bool )=
-
-            
-            if (State.playerTurn st = State.playerNumber st) then
-                Print.printHand pieces (State.hand st)
+            if (shouldPlay) then
+                Thread.Sleep(3000)
+                Print.printHand pieces (st.hand)
                 let input =  System.Console.ReadLine()
                 let move = RegEx.parseMove input
 
@@ -86,9 +84,14 @@ module Scrabble =
                 forcePrint (sprintf "New pieces aquired: %s" (newPieces.ToString()))
                 let remove = List.fold (fun acc elm -> MultiSet.removeSingle (fst(snd(elm))) acc) st.hand ms
                 let add = List.fold (fun acc elm -> MultiSet.add (fst elm) (snd elm) acc) remove newPieces
+                
                 //let newBoardState = List.fold (fun acc (coords, (_, (char,points))) -> Map.add coord (char,points) acc ) st.boardState ms
-                let st' = State.mkState st.board st.dict st.numPlayers st.playerNumber st.playerTurn st.hand 
-                //let st' = State.mkState st.playerNumber added newBoardState st.numPLayers st.words st.board st.playerTurn
+
+
+                let st' = State.mkState st.playerNumber st.hand st.boardState st.numPlayers st.board st.playerTurn
+
+
+                //let st' = State.mkState st.playerNumber added newBoardState st.numPlayers st.words st.board st.playerTurn
                 aux st' false
             | RCM (CMPlayed (pid, ms, points)) ->
                 (* Successful play by other player. Update your state *)
@@ -97,16 +100,18 @@ module Scrabble =
             | RCM (CMPlayFailed (pid, ms)) ->
                 (* Failed play. Update your state *)
                 let st' = st // This state needs to be updated
-                aux st' (pid % st.numPlayers + 1u = st.playerNumber)
+                aux st' (pid % st.numPlayers + 1u = st.playerNumber) 
             | RCM (CMPassed (pid)) ->
                 let st' = st
-                aux st' (pid % st.numPlayers + 1u = st.playerNumber)
+                aux st' (pid % st.numPlayers + 1u = st.playerNumber) 
             | RCM (CMGameOver _) -> ()
             | RCM a -> failwith (sprintf "not implmented: %A" a)
             | RGPE err -> printfn "Gameplay Error:\n%A" err; aux st false
 
-
-        aux st 
+        if (st.playerTurn = st.playerNumber) then
+            aux st true
+        else
+            aux st false
 
     let startGame 
             (boardP : boardProg) 
@@ -132,5 +137,5 @@ module Scrabble =
                   
         let handSet = List.fold (fun acc (x, k) -> MultiSet.add x k acc) MultiSet.empty hand
 
-        fun () -> playGame cstream tiles (State.mkState board dict playerNumber playerTurn handSet)
+        fun () -> playGame cstream tiles (State.mkState playerNumber handSet Map.empty numPlayers boardP playerTurn)
         
