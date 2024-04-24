@@ -260,3 +260,5 @@ MyProject_coverage.xml
 ScrabbleTemplate/ScrabbleTemplate/bin/Debug/net7.0/Scrabble
 *.dll
 *.json
+*.ScrabbleBot.pdb
+*.cache
