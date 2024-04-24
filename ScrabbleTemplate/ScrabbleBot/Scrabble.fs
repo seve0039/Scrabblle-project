@@ -107,7 +107,7 @@ module Scrabble =
                 Print.printHand pieces (addNewLetters)
 
 
-                let st' = State.mkState st.playerNumber add st.boardState st.numPlayers st.board newTurn
+                let st' = State.mkState st.playerNumber addNewLetters st.boardState st.numPlayers st.board newTurn
 
 
                 //let st' = State.mkState st.playerNumber added newBoardState st.numPlayers st.words st.board st.playerTurn
