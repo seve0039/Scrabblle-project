@@ -81,17 +81,24 @@ module Scrabble =
             match msg with
             | RCM (CMPlaySuccess(ms, points, newPieces)) ->
                   (* Successful play by you. Update your state (remove old tiles, add the new ones, change turn, etc) *)
-                forcePrint (sprintf "New pieces aquired: %s" (newPieces.ToString()))
-                let remove = List.fold (fun acc elm -> MultiSet.removeSingle (fst(snd(elm))) acc) st.hand ms
-                let add = List.fold (fun acc elm -> MultiSet.add (fst elm) (snd elm) acc) remove newPieces
+                Thread.Sleep(5000)
+                let removedPlayedLetters = List.fold (fun acc elm -> MultiSet.removeSingle (fst(snd(elm))) acc) st.hand ms
+                System.Console.WriteLine("REMOVED::::::")
+                System.Console.WriteLine(ms)
+                let addNewLetters = List.fold (fun acc elm -> MultiSet.add (fst elm) (snd elm) acc) removedPlayedLetters newPieces
+                Thread.Sleep(500)
+                System.Console.WriteLine("ADDED::::::::::.")
+                Thread.Sleep(500)
+                let newSet = MultiSet.empty
+                let newPiecesMultiSet = List.fold (fun acc elm -> MultiSet.add (fst elm) (snd elm) acc) newSet newPieces
+                Print.printHand pieces (newPiecesMultiSet)
                 
-                //let newBoardState = List.fold (fun acc (coords, (_, (char,points))) -> Map.add coord (char,points) acc ) st.boardState ms
+                Thread.Sleep(500)
+                System.Console.WriteLine("YOUR HAND IS NOW")
+                Print.printHand pieces (addNewLetters)
 
 
-                let st' = State.mkState st.playerNumber st.hand st.boardState st.numPlayers st.board st.playerTurn
-
-
-                //let st' = State.mkState st.playerNumber added newBoardState st.numPlayers st.words st.board st.playerTurn
+                let st' = State.mkState st.playerNumber add st.boardState st.numPlayers st.board st.playerTurn
                 aux st' false
             | RCM (CMPlayed (pid, ms, points)) ->
                 (* Successful play by other player. Update your state *)

@@ -154,25 +154,25 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Patrick\\.nuget\\packages\\": {},
+    "C:\\Users\\patri\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackagesFallback\\": {},
     "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Patrick\\Documents\\GitHub\\Scrabblle-project\\ScrabbleTemplate\\ScrabbleBot\\ScrabbleBot.fsproj",
+      "projectUniqueName": "c:\\Users\\patri\\Documents\\GitHub\\Scrabblle-project\\ScrabbleTemplate\\ScrabbleBot\\ScrabbleBot.fsproj",
       "projectName": "ScrabbleBot",
-      "projectPath": "C:\\Users\\Patrick\\Documents\\GitHub\\Scrabblle-project\\ScrabbleTemplate\\ScrabbleBot\\ScrabbleBot.fsproj",
-      "packagesPath": "C:\\Users\\Patrick\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Patrick\\Documents\\GitHub\\Scrabblle-project\\ScrabbleTemplate\\ScrabbleBot\\obj\\",
+      "projectPath": "c:\\Users\\patri\\Documents\\GitHub\\Scrabblle-project\\ScrabbleTemplate\\ScrabbleBot\\ScrabbleBot.fsproj",
+      "packagesPath": "C:\\Users\\patri\\.nuget\\packages\\",
+      "outputPath": "c:\\Users\\patri\\Documents\\GitHub\\Scrabblle-project\\ScrabbleTemplate\\ScrabbleBot\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackagesFallback\\",
         "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
       ],
       "configFilePaths": [
-        "C:\\Users\\Patrick\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\patri\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.Fallback.config"
       ],
@@ -182,8 +182,7 @@
       "sources": {
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "C:\\Program Files\\dotnet\\sdk\\7.0.408\\FSharp\\library-packs": {},
-        "https://api.nuget.org/v3/index.json": {},
-        "https://www.nuget.org/api/v2": {}
+        "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
         "net7.0": {
