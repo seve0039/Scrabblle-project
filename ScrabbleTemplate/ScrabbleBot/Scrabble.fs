@@ -76,12 +76,35 @@ module Scrabble =
 //            debugPrint (sprintf "Player %d <- Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
             match msg with
             | RCM (CMPlaySuccess(ms, points, newPieces)) ->
-                (* Successful play by you. Update your state (remove old tiles, add the new ones, change turn, etc) *)
-                let st' = st // This state needs to be updated
+                  (* Successful play by you. Update your state (remove old tiles, add the new ones, change turn, etc) *)
+                Thread.Sleep(5000)
+                let removedPlayedLetters = List.fold (fun acc elm -> MultiSet.removeSingle (fst(snd(elm))) acc) st.hand ms
+                System.Console.WriteLine("REMOVED::::::")
+                System.Console.WriteLine(ms)
+                let addNewLetters = List.fold (fun acc elm -> MultiSet.add (fst elm) (snd elm) acc) removedPlayedLetters newPieces
+                Thread.Sleep(500)
+                System.Console.WriteLine("ADDED::::::::::.")
+                Thread.Sleep(500)
+                let newSet = MultiSet.empty
+                let newPiecesMultiSet = List.fold (fun acc elm -> MultiSet.add (fst elm) (snd elm) acc) newSet newPieces
+                Print.printHand pieces (newPiecesMultiSet)
+
+                let newBoardState = List.fold (fun acc elm -> Map.add(fst elm) (snd(snd elm)) acc) st.boardState ms
+
+                Thread.Sleep(500)
+                System.Console.WriteLine("YOUR HAND IS NOW")
+                Print.printHand pieces (addNewLetters)
+
+
+                let st' = State.mkState st.playerNumber addNewLetters newBoardState st.numPlayers st.board newTurn
+
+
+                //let st' = State.mkState st.playerNumber added newBoardState st.numPlayers st.words st.board st.playerTurn
                 aux st'
             | RCM (CMPlayed (pid, ms, points)) ->
                 (* Successful play by other player. Update your state *)
-                let st' = st // This state needs to be updated
+                let newBoardState = List.fold (fun acc elm -> Map.add(fst elm) (snd(snd elm)) acc) st.boardState ms
+                let st' = State.mkState st.playerNumber st.hand newBoardState st.numPlayers st.board newTurn
                 aux st'
             | RCM (CMPlayFailed (pid, ms)) ->
                 (* Failed play. Update your state *)
