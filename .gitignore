@@ -257,6 +257,8 @@ paket-files/
 
 # Coverage Report
 MyProject_coverage.xml
-*ScrabbleBot.dll
-ScrabbleTemplate/ScrabbleTemplate/bin/Debug/net7.0/*.dll
+ScrabbleTemplate/ScrabbleTemplate/bin/Debug/net7.0/Scrabble
+*.dll
 *.json
+*.ScrabbleBot.pdb
+*.cache
