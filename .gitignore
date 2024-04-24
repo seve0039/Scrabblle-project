@@ -259,4 +259,4 @@ paket-files/
 MyProject_coverage.xml
 *ScrabbleBot.dll
 ScrabbleTemplate/ScrabbleTemplate/bin/Debug/net7.0/*.dll
-
+*.json
