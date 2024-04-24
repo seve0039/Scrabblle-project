@@ -105,16 +105,19 @@ module Scrabble =
                 Thread.Sleep(500)
                 System.Console.WriteLine("YOUR HAND IS NOW")
                 Print.printHand pieces (addNewLetters)
+                
+                let newBoardState = List.fold (fun acc elm -> Map.add(fst elm) (snd(snd elm)) acc) st.boardState ms
 
 
-                let st' = State.mkState st.playerNumber addNewLetters st.boardState st.numPlayers st.board newTurn
+                let st' = State.mkState st.playerNumber addNewLetters newBoardState st.numPlayers st.board newTurn
 
 
                 //let st' = State.mkState st.playerNumber added newBoardState st.numPlayers st.words st.board st.playerTurn
                 aux st'
             | RCM (CMPlayed (pid, ms, points)) ->
                 (* Successful play by other player. Update your state *)
-                let st' = State.mkState st.playerNumber st.hand st.boardState st.numPlayers st.board newTurn
+                let newBoardState = List.fold (fun acc elm -> Map.add(fst elm) (snd(snd elm)) acc) st.boardState ms
+                let st' = State.mkState st.playerNumber st.hand newBoardState st.numPlayers st.board newTurn
                 aux st'
             | RCM (CMPlayFailed (pid, ms)) ->
                 (* Failed play. Update your state *)
