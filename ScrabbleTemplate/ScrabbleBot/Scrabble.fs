@@ -66,8 +66,8 @@ module Scrabble =
 
     let playGame cstream pieces (st : State.state) =
 
-        let rec aux (st : State.state) (shouldPlay: bool )=
-            if (shouldPlay) then
+        let rec aux (st : State.state) =
+            if (State.playerTurn st = State.playerNumber st) then
                 Thread.Sleep(3000)
                 Print.printHand pieces (st.hand)
                 let input =  System.Console.ReadLine()
@@ -76,8 +76,17 @@ module Scrabble =
                 debugPrint (sprintf "Player %d -> Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
                 send cstream (SMPlay move)
 
+                let mutable newTurn = (State.playerTurn st) + 1u
+                if(newTurn = (State.numPlayers st) + 1u) then
+                    newTurn <- 1u
+
             let msg = recv cstream
 //            debugPrint (sprintf "Player %d <- Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
+
+            let mutable newTurn = (State.playerTurn st) + 1u
+            if(newTurn = (State.numPlayers st) + 1u) then
+                newTurn <- 1u
+
             match msg with
             | RCM (CMPlaySuccess(ms, points, newPieces)) ->
                   (* Successful play by you. Update your state (remove old tiles, add the new ones, change turn, etc) *)
@@ -88,30 +97,31 @@ module Scrabble =
                 //let newBoardState = List.fold (fun acc (coords, (_, (char,points))) -> Map.add coord (char,points) acc ) st.boardState ms
 
 
-                let st' = State.mkState st.playerNumber st.hand st.boardState st.numPlayers st.board st.playerTurn
+                let st' = State.mkState st.playerNumber add st.boardState st.numPlayers st.board newTurn
 
 
                 //let st' = State.mkState st.playerNumber added newBoardState st.numPlayers st.words st.board st.playerTurn
-                aux st' false
+                aux st'
             | RCM (CMPlayed (pid, ms, points)) ->
                 (* Successful play by other player. Update your state *)
-                let st' = st // This state needs to be updated
-                aux st' (pid % st.numPlayers + 1u = st.playerNumber)
+                let st' = State.mkState st.playerNumber st.hand st.boardState st.numPlayers st.board newTurn
+                aux st'
             | RCM (CMPlayFailed (pid, ms)) ->
                 (* Failed play. Update your state *)
-                let st' = st // This state needs to be updated
-                aux st' (pid % st.numPlayers + 1u = st.playerNumber) 
+                let st' = State.mkState st.playerNumber st.hand st.boardState st.numPlayers st.board newTurn
+                aux st'
             | RCM (CMPassed (pid)) ->
-                let st' = st
-                aux st' (pid % st.numPlayers + 1u = st.playerNumber) 
+                let st' = State.mkState st.playerNumber st.hand st.boardState st.numPlayers st.board newTurn
+                aux st'
+
             | RCM (CMGameOver _) -> ()
             | RCM a -> failwith (sprintf "not implmented: %A" a)
-            | RGPE err -> printfn "Gameplay Error:\n%A" err; aux st false
+            | RGPE err ->
+                printfn "Gameplay Error:\n%A" err;
+                let st' = State.mkState st.playerNumber st.hand st.boardState st.numPlayers st.board newTurn
+                aux st'
 
-        if (st.playerTurn = st.playerNumber) then
-            aux st true
-        else
-            aux st false
+        aux st
 
     let startGame 
             (boardP : boardProg) 
