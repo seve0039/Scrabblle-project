@@ -9,14 +9,17 @@ open ScrabbleUtil.DebugPrint
 
 // The RegEx module is only used to parse human input. It is not used for the final product.
 
+module BotLogic =
+    let firstMove n = ""
+        
+
+
 module RegEx =
     open System.Text.RegularExpressions
-
     let (|Regex|_|) pattern input =
         let m = Regex.Match(input, pattern)
         if m.Success then Some(List.tail [ for g in m.Groups -> g.Value ])
         else None
-
     let parseMove ts =
         let pattern = @"([-]?[0-9]+[ ])([-]?[0-9]+[ ])([0-9]+)([A-Z]{1})([0-9]+)[ ]?"
         Regex.Matches(ts, pattern) |>
@@ -65,12 +68,13 @@ module Scrabble =
     open System.Threading
 
     let playGame cstream pieces (st : State.state) =
-
-        let rec aux (st : State.state) =
+        let mutable counter = 0
+        let rec aux (st : State.state) = 
             if (State.playerTurn st = State.playerNumber st) then
                 Thread.Sleep(3000)
                 Print.printHand pieces (st.hand)
-                let input =  System.Console.ReadLine()
+                let input = System.Console.ReadLine()
+                counter <- counter + 1
                 let move = RegEx.parseMove input
 
                 debugPrint (sprintf "Player %d -> Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
@@ -103,7 +107,6 @@ module Scrabble =
                 Print.printHand pieces (newPiecesMultiSet)
 
                 let newBoardState = List.fold (fun acc elm -> Map.add(fst elm) (snd(snd elm)) acc) st.boardState ms
-
                 Thread.Sleep(500)
                 System.Console.WriteLine("YOUR HAND IS NOW")
                 Print.printHand pieces (addNewLetters)
