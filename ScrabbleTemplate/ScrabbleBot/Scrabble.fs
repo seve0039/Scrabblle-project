@@ -102,6 +102,8 @@ module Scrabble =
                 let newPiecesMultiSet = List.fold (fun acc elm -> MultiSet.add (fst elm) (snd elm) acc) newSet newPieces
                 Print.printHand pieces (newPiecesMultiSet)
 
+                let newBoardState = List.fold (fun acc elm -> Map.add(fst elm) (snd(snd elm)) acc) st.boardState ms
+
                 Thread.Sleep(500)
                 System.Console.WriteLine("YOUR HAND IS NOW")
                 Print.printHand pieces (addNewLetters)
