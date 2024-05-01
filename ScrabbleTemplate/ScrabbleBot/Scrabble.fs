@@ -11,6 +11,10 @@ open ScrabbleUtil.DebugPrint
 
 module BotLogic =
     let firstMove n = ""
+
+    let dict = Dict.fillDict (Dict.empty()) (File.ReadLines "Dictionaries/English.txt")
+    let word = dict.Children.Item('R').Value
+    //let validWord = (dict.lookup "RID")
         
 
 
@@ -51,12 +55,13 @@ module State =
             boardState    : Map<coord, (char * int)>
             numPlayers    : uint32
             playerTurn    : uint32
+            dict : Dictionary.Dict
         }
-    let mkState pn h b num board pTurn = {playerNumber = pn; hand = h; boardState = b; numPlayers = num; board = board; playerTurn = pTurn}
+    let mkState pn h b num board pTurn d = {playerNumber = pn; hand = h; boardState = b; numPlayers = num; board = board; playerTurn = pTurn; dict = d;} 
     //let mkState b d pn np pt h= {board = b; dict = d; numPlayers = np; playerNumber = pn; playerTurn = pt; hand = h}
 
     let board st         = st.board
-    //let dict st          = st.dict
+    let dict st          = st.dict
 
     let playerNumber st  = st.playerNumber
     let playerTurn st    = st.playerTurn
@@ -74,9 +79,10 @@ module Scrabble =
                 Thread.Sleep(3000)
                 Print.printHand pieces (st.hand)
                 let input = System.Console.ReadLine()
+                
                 counter <- counter + 1
                 let move = RegEx.parseMove input
-
+                System.Console.WriteLine(BotLogic.word)
                 debugPrint (sprintf "Player %d -> Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
                 send cstream (SMPlay move)
 
@@ -112,7 +118,7 @@ module Scrabble =
                 Print.printHand pieces (addNewLetters)
 
 
-                let st' = State.mkState st.playerNumber addNewLetters newBoardState st.numPlayers st.board newTurn
+                let st' = State.mkState st.playerNumber addNewLetters newBoardState st.numPlayers st.board newTurn st.dict
 
 
                 //let st' = State.mkState st.playerNumber added newBoardState st.numPlayers st.words st.board st.playerTurn
@@ -120,21 +126,21 @@ module Scrabble =
             | RCM (CMPlayed (pid, ms, points)) ->
                 (* Successful play by other player. Update your state *)
                 let newBoardState = List.fold (fun acc elm -> Map.add(fst elm) (snd(snd elm)) acc) st.boardState ms
-                let st' = State.mkState st.playerNumber st.hand newBoardState st.numPlayers st.board newTurn
+                let st' = State.mkState st.playerNumber st.hand newBoardState st.numPlayers st.board newTurn st.dict
                 aux st'
             | RCM (CMPlayFailed (pid, ms)) ->
                 (* Failed play. Update your state *)
-                let st' = State.mkState st.playerNumber st.hand st.boardState st.numPlayers st.board newTurn
+                let st' = State.mkState st.playerNumber st.hand st.boardState st.numPlayers st.board newTurn st.dict
                 aux st'
             | RCM (CMPassed (pid)) ->
-                let st' = State.mkState st.playerNumber st.hand st.boardState st.numPlayers st.board newTurn
+                let st' = State.mkState st.playerNumber st.hand st.boardState st.numPlayers st.board newTurn st.dict
                 aux st'
 
             | RCM (CMGameOver _) -> ()
             | RCM a -> failwith (sprintf "not implmented: %A" a)
             | RGPE err ->
                 printfn "Gameplay Error:\n%A" err;
-                let st' = State.mkState st.playerNumber st.hand st.boardState st.numPlayers st.board newTurn
+                let st' = State.mkState st.playerNumber st.hand st.boardState st.numPlayers st.board newTurn st.dict
                 aux st'
 
         aux st
@@ -159,8 +165,9 @@ module Scrabble =
 
         //let dict = dictf true // Uncomment if using a gaddag for your dictionary
         let dict = dictf false // Uncomment if using a trie for your dictionary
+        
         let board = Parser.mkBoard boardP
 
         let handSet = List.fold (fun acc (x, k) -> MultiSet.add x k acc) MultiSet.empty hand
 
-        fun () -> playGame cstream tiles (State.mkState playerNumber handSet Map.empty numPlayers boardP playerTurn)
+        fun () -> playGame cstream tiles (State.mkState playerNumber handSet Map.empty numPlayers boardP playerTurn dict)
