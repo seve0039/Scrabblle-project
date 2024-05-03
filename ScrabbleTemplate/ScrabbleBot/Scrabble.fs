@@ -56,7 +56,25 @@
             | Some (_, dict) -> step 'I' dict
             | None -> None
             //let validWord = (dict.lookup "RID")
+        let findWord (letters: string) (dictionaryPath: string) =
+            let isValidWord (word: string) (letters: string) =
+                let mutable remainingLetters = letters
+                let mutable isValid = true
+                if word.Length % 2 = 0 then // Check if word length is even
+                    isValid <- false
+                for char in word do
+                    match remainingLetters.IndexOf(char) with
+                    | -1 -> isValid <- false
+                    | index ->
+                        remainingLetters <- remainingLetters.Remove(index, 1)
+                isValid
             
+            let wordQuery = 
+                File.ReadLines(dictionaryPath)
+                |> Seq.tryFind (fun word -> isValidWord word letters)
+            match wordQuery with
+            | Some(word) -> word
+            | None -> "No valid word found"
 
 
     module RegEx =
@@ -124,7 +142,15 @@
                     
                     counter <- counter + 1
                     let move = RegEx.parseMove input
+<<<<<<< Updated upstream
                     BotLogic.getAllCharacters st.boardState |> printfn "%A"
+=======
+                    BotLogic.getFirstCharInHand st.hand pieces |> printfn "%A"
+                    let letters = "DEFILR"
+                    let dictionaryPath = "Dictionaries/English.txt"
+                    let word = BotLogic.findWord letters dictionaryPath
+                    printfn "Found word: %s" word
+>>>>>>> Stashed changes
                     debugPrint (sprintf "Player %d -> Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
                     send cstream (SMPlay move)
 
