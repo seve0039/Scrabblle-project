@@ -23,16 +23,31 @@
         let valToOption value =
             match value with 
             | x -> Some x
+
+        let getCharFromString = fun (s : string) -> s.[6]
         let getFirstCharInHand (hand : MultiSet.MultiSet<uint32>) (pieces : Map<uint32,'a>) =
             let firstKey = MultiSet.fold (fun acc k _ -> Some k) None hand
-            Map.find (optionToVal firstKey) pieces
+            (Map.find (optionToVal firstKey) pieces).ToString() |> getCharFromString
 
 
+        let getAllCharacters (boardState) : char list =
+            boardState 
+            |> Map.toSeq
+            |> Seq.map (fun (_, (char, _)) -> char)
+            |> List.ofSeq
 
-        let printHand pieces hand =
-            hand |>
-            MultiSet.fold (fun _ x i -> forcePrint (sprintf "%d -> (%A, %d)\n" x (Map.find x pieces) i)) ()
+            
+        let lookForViableMove pieces hand dict boardState = 
+            let chars = getAllCharacters boardState
+            let firstChar = getFirstCharInHand hand pieces
+            
+            ""
+                
+                
+            //let rec aux hand dict board = 
 
+                
+            
         //let lookUpTest = (lookup "RID" (dict false))|> printfn "%A"
         let stepTest = step 'R' (dict false)
         
@@ -109,7 +124,7 @@
                     
                     counter <- counter + 1
                     let move = RegEx.parseMove input
-                    BotLogic.getFirstCharInHand st.hand pieces |> printfn "%A"
+                    BotLogic.getAllCharacters st.boardState |> printfn "%A"
                     debugPrint (sprintf "Player %d -> Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
                     send cstream (SMPlay move)
 
