@@ -43,7 +43,7 @@ module internal MultiSet
     let foldBack (f : 'a -> uint32 -> 'b -> 'b) (s : MultiSet<'a>) (acc : 'b) = Map.foldBack f s acc
    
     let ofList (_ : 'a list) : MultiSet<'a> = empty
-    let toList (_ : MultiSet<'a>) : 'a list = []
+    let toList (x : MultiSet<'a>) : 'a list = Map.toList x |> List.collect (fun (a,n) -> List.init (int n) (fun _ -> a)) 
 
     let map (_ : 'a -> 'b) (_ : MultiSet<'a>) : MultiSet<'b> = empty
 

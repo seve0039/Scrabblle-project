@@ -25,21 +25,24 @@
             | x -> Some x
 
         let getCharFromString = fun (s : string) -> s.[6]
-        let getFirstCharInHand (hand : MultiSet.MultiSet<uint32>) (pieces : Map<uint32,'a>) =
-            let firstKey = MultiSet.fold (fun acc k _ -> Some k) None hand
-            (Map.find (optionToVal firstKey) pieces).ToString() |> getCharFromString
+        let getCharsInHand (hand : MultiSet.MultiSet<uint32>) (pieces : Map<uint32,'a>) =
+            let list = MultiSet.toList hand
+            (List.map (fun elm -> (Map.find (elm) pieces).ToString() |> getCharFromString)) list
+            //(Map.find (optionToVal list) pieces).ToString() |> getCharFromString
 
 
-        let getAllCharacters (boardState) : char list =
+        let getAllCharacters (boardState) : ('a * 'b) list =
             boardState 
             |> Map.toSeq
-            |> Seq.map (fun (_, (char, _)) -> char)
-            |> List.ofSeq
+            |> Seq.map (fun (coords, (char, _)) -> (coords, char))
+            |> Seq.toList
 
             
         let lookForViableMove pieces hand dict boardState = 
             let chars = getAllCharacters boardState
-            let firstChar = getFirstCharInHand hand pieces
+            let charsInHand = getCharsInHand hand pieces
+
+            //let firstChar = getFirstCharInHand hand pieces
             
             ""
                 
@@ -124,6 +127,7 @@
                     
                     counter <- counter + 1
                     let move = RegEx.parseMove input
+                    //BotLogic.getCharsInHand st.hand pieces |> printfn "%A"
                     BotLogic.getAllCharacters st.boardState |> printfn "%A"
                     debugPrint (sprintf "Player %d -> Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
                     send cstream (SMPlay move)
