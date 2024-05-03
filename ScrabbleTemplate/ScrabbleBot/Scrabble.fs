@@ -29,6 +29,26 @@
             let firstKey = MultiSet.fold (fun acc k _ -> Some k) None hand
             (Map.find (optionToVal firstKey) pieces).ToString() |> getCharFromString
 
+        let findWord (letters: string) (dictionaryPath: string) =
+            let isValidWord (word: string) (letters: string) =
+                let mutable remainingLetters = letters
+                let mutable isValid = true
+                if word.Length % 2 = 0 then // Check if word length is even
+                    isValid <- false
+                for char in word do
+                    match remainingLetters.IndexOf(char) with
+                    | -1 -> isValid <- false
+                    | index ->
+                        remainingLetters <- remainingLetters.Remove(index, 1)
+                isValid
+            
+            let wordQuery = 
+                File.ReadLines(dictionaryPath)
+                |> Seq.tryFind (fun word -> isValidWord word letters)
+            match wordQuery with
+            | Some(word) -> word
+            | None -> "No valid word found"
+
 
         let getAllCharacters (boardState) : char list =
             boardState 
@@ -125,6 +145,14 @@
                     counter <- counter + 1
                     let move = RegEx.parseMove input
                     BotLogic.getAllCharacters st.boardState |> printfn "%A"
+
+
+                     //Used to test bot finding first word
+                    let letters = "DEFILR"
+                    let dictionaryPath = "Dictionaries/English.txt"
+                    let word = BotLogic.findWord letters dictionaryPath
+                    printfn "Found word: %s" word
+
                     debugPrint (sprintf "Player %d -> Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
                     send cstream (SMPlay move)
 
