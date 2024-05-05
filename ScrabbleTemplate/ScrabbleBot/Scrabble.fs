@@ -11,6 +11,7 @@
 
     module BotLogic =
         open ScrabbleUtil.Dictionary
+        
         let dict = mkDict (File.ReadLines "Dictionaries/English.txt") None 
 
         let firstMove hand dict =  
@@ -50,6 +51,17 @@
             | Some(word) -> word
             | None -> "No valid word found"
 
+        let rec permute (str:string) =
+            match str with
+            | "" -> [""]
+            | _ ->
+                [ for i = 0 to str.Length - 1 do
+                    let prefix = str.[i..i]
+                    let suffix = str.[0..i-1] + str.[i+1..]
+                    for perm in permute suffix do
+                        yield prefix + perm ]
+        
+
 
         let getAllCharacters (boardState) : ('a * 'b) list =
             boardState 
@@ -69,15 +81,58 @@
                 
             //let rec aux hand dict board = 
 
-                
-            
+                        
         //let lookUpTest = (lookup "RID" (dict false))|> printfn "%A"
-        let stepTest = step 'R' (dict false)
-        
-        let newStep =
-            match stepTest with
-            | Some (_, dict) -> step 'I' dict
+
+
+        let stepTest (firstChar : char) = 
+            step firstChar (dict false)
+        let mutable initialRecu = stepTest "I".[0]
+        let rec recursiveStep (nextStep : option<bool * Dict> , nextChar : char , indexTracker : int) = 
+            match nextStep with
+            | Some (true, _) -> 
+                System.Console.WriteLine("SUCCESS DIG DEr")
+                //addToList <- true
+                step nextChar (dict false) // This line ensures the computation is done
+            | Some (_, dict) ->
+                let newStep = stepTest nextChar
+                //System.Console.WriteLine(str)
+                recursiveStep newStep 
             | None -> None
+
+        let iterateOverList(wordList : list<string>) = 
+            let mutable results : string list = []
+            
+            for str in wordList do 
+                let mutable addToList = false
+                let mutable boolTester : (bool*Dict) option = None
+                initialRecu <- stepTest str.[0]
+                for c in str do
+                    boolTester <- recursiveStep initialRecu
+                match boolTester with 
+                | (Some(true, _) ) -> results <- str :: results
+                | _ -> ()
+            results
+
+        let newStep (wordList : list<string>) =
+            let mutable results = []
+            for str in wordList do 
+                let mutable addToList = false
+                for c in str do 
+                    match stepTest c with
+                    | Some (true, _) -> 
+                        System.Console.WriteLine("SUCCESS DIG DEr")
+                        addToList <- true
+                        step c (dict false) // This line ensures the computation is done
+                    | Some (_, dict) ->
+                        System.Console.WriteLine(str)
+                        step c dict
+                    | None -> None
+                if addToList then
+                    results <- "str" :: results // Add the string to the results list
+            results
+
+           // results
             //let validWord = (dict.lookup "RID")
             
 
@@ -152,11 +207,13 @@
 
 
                      //Used to test bot finding first word
-                    let letters = "DEFILR"
+                    let letters = "RID"
                     let dictionaryPath = "Dictionaries/English.txt"
                     let word = BotLogic.findWord letters dictionaryPath
                     printfn "Found word: %s" word
-
+                    let allPerms = BotLogic.permute letters
+                    //System.Console.WriteLine(BotLogic.newStep allPerms)
+                    BotLogic.iterateOverList allPerms
                     debugPrint (sprintf "Player %d -> Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
                     send cstream (SMPlay move)
 
