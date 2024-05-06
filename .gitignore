@@ -263,3 +263,4 @@ ScrabbleTemplate/ScrabbleTemplate/bin/Debug/net7.0/Scrabble
 *.ScrabbleBot.pdb
 *.cache
 *.pdb
+ScrabbleTemplate/ScrabbleTemplate/obj/Debug/net7.0/ScrabbleTemplate.AssemblyInfo.fs

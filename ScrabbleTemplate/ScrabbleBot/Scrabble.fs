@@ -52,15 +52,19 @@
             | None -> "No valid word found"
 
         let rec permute (str:string) =
-            match str with
-            | "" -> [""]
-            | _ ->
-                [ for i = 0 to str.Length - 1 do
-                    let prefix = str.[i..i]
-                    let suffix = str.[0..i-1] + str.[i+1..]
-                    for perm in permute suffix do
-                        yield prefix + perm ]
-        
+            let rec permuteHelper (str: string) len =
+                match len with
+                | x when x <= 0 -> [""]
+                | _ ->
+                    [ for i = 0 to str.Length - 1 do
+                        let prefix = str.[i..i]
+                        let suffix = str.[0..i-1] + str.[i+1..]
+                        for perm in permuteHelper suffix (len - 1) do
+                            yield prefix + perm ]
+            
+            [ for len in [3; 5; 7] do
+                for perm in permuteHelper str len do
+                    yield perm ]
 
 
         let getAllCharacters (boardState) : ('a * 'b) list =
@@ -202,7 +206,7 @@
                    // System.Console.WriteLine(BotLogic.getAllCharacters)
 
                      //Used to test bot finding first word
-                    let letters = "DEF"
+                    let letters = "DEEFILR"
                     let dictionaryPath = "Dictionaries/English.txt"
                     let word = BotLogic.findWord letters dictionaryPath
                     //printfn "Found word: %s" word
