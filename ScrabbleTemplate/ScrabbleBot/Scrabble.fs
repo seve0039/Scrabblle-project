@@ -72,69 +72,63 @@
             
         let lookForViableMove pieces hand dict boardState = 
             let chars = getAllCharacters boardState
-            let charsInHand = getCharsInHand hand pieces
-
-            //let firstChar = getFirstCharInHand hand pieces
-            
+            let charsInHand = getCharsInHand hand pieces        
             ""
-                
-                
-            //let rec aux hand dict board = 
-
-                        
-        //let lookUpTest = (lookup "RID" (dict false))|> printfn "%A"
 
 
-        let stepTest (firstChar : char) = 
-            step firstChar (dict false)
-        let mutable initialRecu = stepTest "I".[0]
-        let rec recursiveStep (nextStep : option<bool * Dict> , nextChar : char , indexTracker : int) = 
-            match nextStep with
-            | Some (true, _) -> 
-                System.Console.WriteLine("SUCCESS DIG DEr")
-                //addToList <- true
-                step nextChar (dict false) // This line ensures the computation is done
-            | Some (_, dict) ->
-                let newStep = stepTest nextChar
-                //System.Console.WriteLine(str)
-                recursiveStep newStep 
+        let findWords (characters : char list) (trie : Dict) =
+            let rec backtrack (chars : char list) (trieNode : Dict) (prefix : string) (validWords : string list) =
+                match chars with
+                | [] -> // End of characters
+                    if lookup prefix trie then
+                        prefix :: validWords // If the current prefix forms a valid word, add it to the list
+                    else
+                        validWords
+                | c :: rest ->
+                    match step c trieNode with
+                    | Some (isWord, nextNode) ->
+                        let updatedPrefix = prefix + string c
+                        let nextValidWords =
+                            if isWord then
+                                updatedPrefix :: validWords // If we reached a valid word, add it to the list
+                            else
+                                validWords
+                        // Recursively backtrack with remaining characters
+                        backtrack rest nextNode updatedPrefix nextValidWords
+                    | None -> // If no valid step found, return current valid words
+                        validWords
+
+            // Start the backtrack with an empty prefix and the root of the trie
+            backtrack characters trie "" []
+
+
+        let rec recursiveStep (nextStep : option<bool * Dict>) (myString : string)  (indexTracker : int) =      
+
+            match nextStep with   
+            | Some (_, dict) -> 
+                if indexTracker = String.length myString then 
+                    nextStep
+                else 
+                    let newStep = step myString[indexTracker] dict // This line ensures the computation is done
+                    recursiveStep newStep myString (indexTracker+1)
             | None -> None
-
         let iterateOverList(wordList : list<string>) = 
             let mutable results : string list = []
-            
             for str in wordList do 
                 let mutable addToList = false
                 let mutable boolTester : (bool*Dict) option = None
-                initialRecu <- stepTest str.[0]
-                for c in str do
-                    boolTester <- recursiveStep initialRecu
+                
+                let initialRecu= step str.[0] (dict false)
+                boolTester <- recursiveStep initialRecu str 1
+
                 match boolTester with 
-                | (Some(true, _) ) -> results <- str :: results
-                | _ -> ()
-            results
-
-        let newStep (wordList : list<string>) =
-            let mutable results = []
-            for str in wordList do 
-                let mutable addToList = false
-                for c in str do 
-                    match stepTest c with
-                    | Some (true, _) -> 
-                        System.Console.WriteLine("SUCCESS DIG DEr")
-                        addToList <- true
-                        step c (dict false) // This line ensures the computation is done
-                    | Some (_, dict) ->
-                        System.Console.WriteLine(str)
-                        step c dict
-                    | None -> None
-                if addToList then
-                    results <- "str" :: results // Add the string to the results list
-            results
-
-           // results
-            //let validWord = (dict.lookup "RID")
+                | Some(true, _)  -> 
+                    results <- str :: results
+                    
+                | _ -> 
+                    ()
             
+            results
 
 
     module RegEx =
@@ -198,22 +192,31 @@
                 if (State.playerTurn st = State.playerNumber st) then
                     Thread.Sleep(3000)
                     Print.printHand pieces (st.hand)
+                    let allChars = BotLogic.getCharsInHand st.hand pieces
+                    let possibleWords = BotLogic.findWords allChars st.dict 
+                    let sorted = List.sort possibleWords
+                    System.Console.WriteLine("The improved bot found these possible moves")
+                    printfn "Valid words: %A" possibleWords
+                    //let allChars = BotLogic.getAllCharacters st.boardState |> printfn "%A"
+                    //System.Console.WriteLine(allChars)
+                   // System.Console.WriteLine(BotLogic.getAllCharacters)
+
+                     //Used to test bot finding first word
+                    let letters = "DEF"
+                    let dictionaryPath = "Dictionaries/English.txt"
+                    let word = BotLogic.findWord letters dictionaryPath
+                    //printfn "Found word: %s" word
+                    let allPerms = BotLogic.permute letters
+                    //System.Console.WriteLine(BotLogic.newStep allPerms)
+                    System.Console.WriteLine("The bot found these possible moves")
+                    System.Console.WriteLine(BotLogic.iterateOverList allPerms)
                     let input = System.Console.ReadLine()
                     
                     counter <- counter + 1
                     let move = RegEx.parseMove input
-                    //BotLogic.getCharsInHand st.hand pieces |> printfn "%A"
-                    BotLogic.getAllCharacters st.boardState |> printfn "%A"
 
 
-                     //Used to test bot finding first word
-                    let letters = "RID"
-                    let dictionaryPath = "Dictionaries/English.txt"
-                    let word = BotLogic.findWord letters dictionaryPath
-                    printfn "Found word: %s" word
-                    let allPerms = BotLogic.permute letters
-                    //System.Console.WriteLine(BotLogic.newStep allPerms)
-                    BotLogic.iterateOverList allPerms
+
                     debugPrint (sprintf "Player %d -> Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
                     send cstream (SMPlay move)
 
