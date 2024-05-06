@@ -4,7 +4,7 @@
     open ScrabbleUtil.ServerCommunication
 
     open System.IO
-
+    open System
     open ScrabbleUtil.DebugPrint
 
     // The RegEx module is only used to parse human input. It is not used for the final product.
@@ -196,24 +196,15 @@
                 if (State.playerTurn st = State.playerNumber st) then
                     Thread.Sleep(3000)
                     Print.printHand pieces (st.hand)
-                    let allChars = BotLogic.getCharsInHand st.hand pieces
-                    let possibleWords = BotLogic.findWords allChars st.dict 
-                    let sorted = List.sort possibleWords
-                    System.Console.WriteLine("The improved bot found these possible moves")
-                    printfn "Valid words: %A" possibleWords
-                    //let allChars = BotLogic.getAllCharacters st.boardState |> printfn "%A"
-                    //System.Console.WriteLine(allChars)
-                   // System.Console.WriteLine(BotLogic.getAllCharacters)
 
-                     //Used to test bot finding first word
-                    let letters = "DEEFILR"
+                    //Used to test bot finding first word
+                    let letters =String.Concat(BotLogic.getCharsInHand st.hand pieces)
                     let dictionaryPath = "Dictionaries/English.txt"
                     let word = BotLogic.findWord letters dictionaryPath
-                    //printfn "Found word: %s" word
                     let allPerms = BotLogic.permute letters
-                    //System.Console.WriteLine(BotLogic.newStep allPerms)
                     System.Console.WriteLine("The bot found these possible moves")
                     System.Console.WriteLine(BotLogic.iterateOverList allPerms)
+                    
                     let input = System.Console.ReadLine()
                     
                     counter <- counter + 1
