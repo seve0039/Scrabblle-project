@@ -87,14 +87,37 @@
                 let y =
                     if horizontal then snd startCoords
                     else (snd startCoords) + index
-                if (horizontal && readTile boardState (x - 1) y = '0') || (not horizontal && readTile boardState x (y - 1) = '0') then
-                    if readTile boardState x y = '0' then
-                        if index = limit then
-                            [| index |]
-                        else
-                            Array.append [| index |] (checkTiles boardState startCoords (index + 1) limit horizontal)    
-                    else 
-                        [| |]
+                if readTile boardState x y = '0' then
+                    if horizontal then
+                        if readTile boardState x (y + 1) = '0' && readTile boardState x (y - 1) = '0' then
+                            if index = 1 then
+                                if readTile boardState (x - 1) y = '0' then
+                                    Array.append [| index |] (checkTiles boardState startCoords (index + 1) limit horizontal)
+                                else
+                                    [| |]
+                            else if index = limit then
+                                if readTile boardState (x + 1) y = '0' then
+                                    [| index |]
+                                else
+                                    [| |]
+                            else 
+                                Array.append [| index |] (checkTiles boardState startCoords (index + 1) limit horizontal)
+                        else [| |]
+                    else
+                        if readTile boardState (x + 1) y = '0' && readTile boardState (x - 1) y = '0' then
+                            if index = 1 then
+                                if readTile boardState x (y - 1) = '0' then
+                                    Array.append [| index |] (checkTiles boardState startCoords (index + 1) limit horizontal)
+                                else
+                                    [| |]
+                            else if index = limit then
+                                if readTile boardState x (y + 1) = '0' then
+                                    [| index |]
+                                else
+                                    [| |]
+                            else 
+                                Array.append [| index |] (checkTiles boardState startCoords (index + 1) limit horizontal)
+                        else [| |]
                 else 
                     [| |]
 
