@@ -73,11 +73,40 @@
             |> Seq.map (fun (coords, (char, _)) -> (coords, char))
             |> Seq.toList
 
+        let readTile (boardState: Map<coord, (char * int)>) x y : char =
+            match Map.tryFind (x, y) boardState with
+            | Some (c, _) -> c
+            | None -> '0'
             
-        let lookForViableMove pieces hand dict boardState = 
-            let chars = getAllCharacters boardState
-            let charsInHand = getCharsInHand hand pieces        
-            ""
+        let lookForViableMove coords word boardState = 
+
+            let rec checkTiles boardState startCoords index limit horizontal =
+                let x = 
+                    if horizontal then (fst startCoords) + index
+                    else fst startCoords
+                let y =
+                    if horizontal then snd startCoords
+                    else (snd startCoords) + index
+                if (horizontal && readTile boardState (x - 1) y = '0') || (not horizontal && readTile boardState x (y - 1) = '0') then
+                    if readTile boardState x y = '0' then
+                        if index = limit then
+                            [| index |]
+                        else
+                            Array.append [| index |] (checkTiles boardState startCoords (index + 1) limit horizontal)    
+                    else 
+                        [| |]
+                else 
+                    [| |]
+
+
+            let horizontalPlacementArray = checkTiles boardState coords 1 (List.length word) true
+            if(Array.length horizontalPlacementArray = List.length word) then
+                horizontalPlacementArray
+            else
+                let verticalPlacementArray = checkTiles boardState coords 1 (List.length word) false
+                if(Array.length verticalPlacementArray = List.length word) then
+                    verticalPlacementArray
+                else [| |]
 
 
         let findWords (characters : char list) (trie : Dict) =
