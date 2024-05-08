@@ -67,10 +67,10 @@
                     yield perm ]
 
 
-        let getAllCharacters (boardState) : ('a * 'b) list =
+        let getAllCharacters (boardState) =
             boardState 
             |> Map.toSeq
-            |> Seq.map (fun (coords, (char, _)) -> (coords, char))
+            |> Seq.map (fun (coords, (char, s)) -> ((coords, char)))
             |> Seq.toList
 
         let readTile (boardState: Map<coord, (char * int)>) x y : char =
@@ -132,6 +132,9 @@
                 else [| |]
 
 
+            
+                    
+
         let findWords (characters : char list) (trie : Dict) =
             let rec backtrack (chars : char list) (trieNode : Dict) (prefix : string) (validWords : string list) =
                 match chars with
@@ -156,6 +159,7 @@
 
             // Start the backtrack with an empty prefix and the root of the trie
             backtrack characters trie "" []
+
 
 
         let rec recursiveStep (nextStep : option<bool * Dict>) (myString : string)  (indexTracker : int) =      
@@ -185,6 +189,30 @@
                     ()
             
             results
+        let listToString (wordList : list<char * coord>) = 
+            let mutable result = ""
+            for str in wordList do 
+                result <- result + string (fst str) + "\n"
+            result
+        let secondMove (hand) (boardState : Map<coord, (char * int)>) (pieces : Map<uint32, tile>) d:(option<bool * Dict>) = 
+            let boardChars = getAllCharacters boardState
+            let inHand = getCharsInHand hand pieces
+            let rec findNextPiece  acc d word= 
+                match boardChars[acc] with
+                | (coords, char) -> 
+                    let check =lookup word d
+                    match check with
+                    | true -> 
+                        word
+                    | false ->
+                        let newDict = step char d
+                        findNextPiece (acc + 1) newDict word
+                    
+            findNextPiece 0 dict []
+                            for x in boardChars do
+
+                
+
 
 
     module RegEx =
@@ -248,7 +276,7 @@
                 if (State.playerTurn st = State.playerNumber st) then
                     Thread.Sleep(3000)
                     Print.printHand pieces (st.hand)
-
+                    Console.WriteLine (BotLogic.getAllCharacters st.boardState)
                     //Used to test bot finding first word
                     let letters =String.Concat(BotLogic.getCharsInHand st.hand pieces)
                     let dictionaryPath = "Dictionaries/English.txt"
