@@ -31,6 +31,41 @@
             (List.map (fun elm -> (Map.find (elm) pieces).ToString() |> getCharFromString)) list
             //(Map.find (optionToVal list) pieces).ToString() |> getCharFromString
 
+        let getCharValues (hand : MultiSet.MultiSet<uint32>) (pieces : Map<uint32,'a>) =
+            
+            let handToList = MultiSet.toList hand
+            let mutable pointList = []
+            let charList = (List.map (fun elm -> (Map.find (elm) pieces).ToString() |> getCharFromString)) handToList
+            System.Console.WriteLine(charList)
+            let pointSet =List.map (fun elm -> (Map.find (elm) pieces) ) handToList
+
+            //For every set in pointSet, get the 2nd element, which is the default point a letter rewards
+            for newSet in pointSet do
+                let mutable count = 1
+                for elem in newSet do
+                    count <- count + 1
+                    if count % 2 = 0 then
+                        pointList <- snd elem :: pointList
+
+            //Lists are in reverse order for some reason? So reverse reverse them to good order
+            let pointList = List.rev pointList
+            let listLength = List.length charList
+
+            
+            let mutable moveList = []
+            //Get every element of each list, convert them to string, combine them and add them to the new list
+            for i in 0 .. listLength-1 do 
+                let mutable moveString = ""
+                let idString = handToList[i].ToString()
+                let charString = charList[i].ToString()
+                let pointString = pointList[i].ToString()      
+                moveString <- idString + charString + pointString
+                moveList <- moveString :: moveList
+                ()
+
+            //Reverse again
+            let moveList = List.rev moveList
+            moveList
         let findWord (letters: string) (dictionaryPath: string) =
             let isValidWord (word: string) (letters: string) =
                 let mutable remainingLetters = letters
@@ -132,34 +167,8 @@
                 else [| |]
 
 
-        let findWords (characters : char list) (trie : Dict) =
-            let rec backtrack (chars : char list) (trieNode : Dict) (prefix : string) (validWords : string list) =
-                match chars with
-                | [] -> // End of characters
-                    if lookup prefix trie then
-                        prefix :: validWords // If the current prefix forms a valid word, add it to the list
-                    else
-                        validWords
-                | c :: rest ->
-                    match step c trieNode with
-                    | Some (isWord, nextNode) ->
-                        let updatedPrefix = prefix + string c
-                        let nextValidWords =
-                            if isWord then
-                                updatedPrefix :: validWords // If we reached a valid word, add it to the list
-                            else
-                                validWords
-                        // Recursively backtrack with remaining characters
-                        backtrack rest nextNode updatedPrefix nextValidWords
-                    | None -> // If no valid step found, return current valid words
-                        validWords
-
-            // Start the backtrack with an empty prefix and the root of the trie
-            backtrack characters trie "" []
-
 
         let rec recursiveStep (nextStep : option<bool * Dict>) (myString : string)  (indexTracker : int) =      
-
             match nextStep with   
             | Some (_, dict) -> 
                 if indexTracker = String.length myString then 
@@ -168,7 +177,8 @@
                     let newStep = step myString[indexTracker] dict // This line ensures the computation is done
                     recursiveStep newStep myString (indexTracker+1)
             | None -> None
-        let iterateOverList(wordList : list<string>) = 
+
+        let iterateOverList (wordList : list<string>) = 
             let mutable results : string list = []
             for str in wordList do 
                 let mutable addToList = false
@@ -185,6 +195,10 @@
                     ()
             
             results
+
+        let makeFirstMove (myHand : MultiSet.MultiSet<uint32>) =
+            let tester = None
+            tester
 
 
     module RegEx =
@@ -256,7 +270,7 @@
                     let allPerms = BotLogic.permute letters
                     System.Console.WriteLine("The bot found these possible moves")
                     System.Console.WriteLine(BotLogic.iterateOverList allPerms)
-                    
+                    BotLogic.getCharValues st.hand pieces 
                     let input = System.Console.ReadLine()
                     
                     counter <- counter + 1
