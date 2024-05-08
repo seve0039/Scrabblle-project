@@ -194,22 +194,49 @@
             for str in wordList do 
                 result <- result + string (fst str) + "\n"
             result
-        let secondMove (hand) (boardState : Map<coord, (char * int)>) (pieces : Map<uint32, tile>) d:(option<bool * Dict>) = 
+        let secondMove (hand) (boardState : Map<coord, (char * int)>) (pieces : Map<uint32, tile>) d = 
             let boardChars = getAllCharacters boardState
             let inHand = getCharsInHand hand pieces
-            let rec findNextPiece  acc d word= 
+            let word list = []
+            let mutable word = ""
+            let rec findNextPiece  acc d =
+                if acc = List.length boardChars then
+                    word
+                else 
                 match boardChars[acc] with
                 | (coords, char) -> 
-                    let check =lookup word d
+                    let check =lookup (word + string char) d
                     match check with
                     | true -> 
+                        printfn "The word is in the dictionary %s" word
                         word
                     | false ->
-                        let newDict = step char d
-                        findNextPiece (acc + 1) newDict word
-                    
-            findNextPiece 0 dict []
-                            for x in boardChars do
+                        word <- word + string char
+                        let rec checkHand rest = 
+                            match rest with
+                            | [] -> 
+                                //TODO should run find next piece with acc+1
+                                printfn "No more letters in hand"
+                                word
+                            | char :: rest -> 
+                                let check2 = (lookup (word + (string char)) d)
+                                match check2 with
+                                | true -> 
+                                    printfn "The word is in the dictionary %s" (word + (string char))
+                                    (word + (string char))
+                                | false ->
+                                    let newDict = step char d
+                                    let newDictValue = match newDict with
+                                                        | Some (_, dict) -> dict
+                                                        | None -> dict false
+                                    
+                                    word <- word + (string char)
+                                    checkHand rest
+                        checkHand inHand
+                        
+            findNextPiece 0 (dict false)
+        
+
 
                 
 
@@ -276,7 +303,7 @@
                 if (State.playerTurn st = State.playerNumber st) then
                     Thread.Sleep(3000)
                     Print.printHand pieces (st.hand)
-                    Console.WriteLine (BotLogic.getAllCharacters st.boardState)
+                    Console.WriteLine ("This is second"+BotLogic.secondMove st.hand st.boardState pieces st.dict)
                     //Used to test bot finding first word
                     let letters =String.Concat(BotLogic.getCharsInHand st.hand pieces)
                     let dictionaryPath = "Dictionaries/English.txt"
