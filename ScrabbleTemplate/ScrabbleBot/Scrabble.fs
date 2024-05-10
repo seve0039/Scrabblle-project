@@ -32,11 +32,10 @@
             //(Map.find (optionToVal list) pieces).ToString() |> getCharFromString
 
         let getCharValues (hand : MultiSet.MultiSet<uint32>) (pieces : Map<uint32,'a>) =
-            
             let handToList = MultiSet.toList hand
             let mutable pointList = []
             let charList = (List.map (fun elm -> (Map.find (elm) pieces).ToString() |> getCharFromString)) handToList
-            System.Console.WriteLine(charList)
+            //System.Console.WriteLine(charList)
             let pointSet =List.map (fun elm -> (Map.find (elm) pieces) ) handToList
 
             //For every set in pointSet, get the 2nd element, which is the default point a letter rewards
@@ -51,8 +50,9 @@
             let pointList = List.rev pointList
             let listLength = List.length charList
 
-            
+            let mutable wordValueMap = Map.empty<string,string>
             let mutable moveList = []
+
             //Get every element of each list, convert them to string, combine them and add them to the new list
             for i in 0 .. listLength-1 do 
                 let mutable moveString = ""
@@ -61,12 +61,48 @@
                 let pointString = pointList[i].ToString()      
                 moveString <- idString + charString + pointString
                 moveList <- moveString :: moveList
+                wordValueMap <- Map.add charString moveString wordValueMap
                 ()
 
             //Reverse again
             let moveList = List.rev moveList
             moveList
+        let getCharValuesMap (hand : MultiSet.MultiSet<uint32>) (pieces : Map<uint32,'a>) =
+            let handToList = MultiSet.toList hand
+            let mutable pointList = []
+            let charList = (List.map (fun elm -> (Map.find (elm) pieces).ToString() |> getCharFromString)) handToList
+            //System.Console.WriteLine(charList)
+            let pointSet =List.map (fun elm -> (Map.find (elm) pieces) ) handToList
 
+            //For every set in pointSet, get the 2nd element, which is the default point a letter rewards
+            for newSet in pointSet do
+                let mutable count = 1
+                for elem in newSet do
+                    count <- count + 1
+                    if count % 2 = 0 then
+                        pointList <- snd elem :: pointList
+
+            //Lists are in reverse order for some reason? So reverse reverse them to good order
+            let pointList = List.rev pointList
+            let listLength = List.length charList
+
+            let mutable wordValueMap = Map.empty<string,string>
+            let mutable moveList = []
+
+            //Get every element of each list, convert them to string, combine them and add them to the new list
+            for i in 0 .. listLength-1 do 
+                let mutable moveString = ""
+                let idString = handToList[i].ToString()
+                let charString = charList[i].ToString()
+                let pointString = pointList[i].ToString()      
+                moveString <- idString + charString + pointString
+                moveList <- moveString :: moveList
+                wordValueMap <- Map.add charString moveString wordValueMap
+                ()
+
+            //Reverse again
+            let moveList = List.rev moveList
+            wordValueMap
         let rec permuteTwo (prefix: string) (chars: string list) =
             let rec permuteHelper (chars: string list) len =
                 match len with
@@ -116,7 +152,6 @@
             | None -> '0'
             
         let lookForViableMove coords word boardState = 
-
             let rec checkTiles boardState startCoords index limit horizontal =
                 let x = 
                     if horizontal then (fst startCoords) + index
@@ -279,6 +314,16 @@
                 results <- word :: results
             results
 
+        let makeFirstMove (playableWords : string List) (wordsMapValue : Map<string,string>) =
+            let mutable xCoordinate = 0
+            let mutable resultString = ""
+            for char in playableWords[0] do
+                match Map.tryFind (string char) wordsMapValue with
+                | Some(value) -> resultString <- resultString + " 0 " + xCoordinate.ToString() + " " + value
+                xCoordinate <- xCoordinate+1
+            resultString
+            
+
         let secondMove (hand) (boardState : Map<coord, (char * int)>) (pieces : Map<uint32, tile>) d = 
             let boardChars = getAllCharacters boardState
             let inHand = getCharValues hand pieces
@@ -371,14 +416,20 @@
                     //Used to test bot finding first word
                     let letters =String.Concat(BotLogic.getCharsInHand st.hand pieces)
                     let allPerms = BotLogic.permute letters
-                    System.Console.WriteLine("The bot found these possible moves")
-                    Console.WriteLine (BotLogic.secondMove st.hand st.boardState pieces st.dict)
+                    //System.Console.WriteLine("The bot found these possible moves")
+                    //Console.WriteLine (BotLogic.secondMove st.hand st.boardState pieces st.dict)
                     //System.Console.WriteLine(((BotLogic.permuteTwo "A" (BotLogic.getCharValues st.hand pieces))|> BotLogic.concatList)|> BotLogic.lookupLst)
                     //BotLogic.step3
-                    System.Console.WriteLine(BotLogic.iterateOverList allPerms)
-                    BotLogic.getCharValues st.hand pieces 
-                    let input = System.Console.ReadLine()
-                    
+                    let playableWords = BotLogic.iterateOverList allPerms
+                    let mapValues = BotLogic.getCharValuesMap st.hand pieces
+                    let mutable input = ""
+                    if (st.boardState.IsEmpty) then 
+                        input <- System.Console.ReadLine()
+                        //input <- BotLogic.makeFirstMove playableWords mapValues
+                        
+                    else
+                        input <- System.Console.ReadLine()
+    
                     counter <- counter + 1
                     let move = RegEx.parseMove input
 
@@ -403,20 +454,20 @@
                     (* Successful play by you. Update your state (remove old tiles, add the new ones, change turn, etc) *)
                     Thread.Sleep(5000)
                     let removedPlayedLetters = List.fold (fun acc elm -> MultiSet.removeSingle (fst(snd(elm))) acc) st.hand ms
-                    System.Console.WriteLine("REMOVED::::::")
-                    System.Console.WriteLine(ms)
+                    //System.Console.WriteLine("REMOVED::::::")
+                    //System.Console.WriteLine(ms)
                     let addNewLetters = List.fold (fun acc elm -> MultiSet.add (fst elm) (snd elm) acc) removedPlayedLetters newPieces
                     Thread.Sleep(500)
-                    System.Console.WriteLine("ADDED::::::::::.")
+                    //System.Console.WriteLine("ADDED::::::::::.")
                     Thread.Sleep(500)
                     let newSet = MultiSet.empty
                     let newPiecesMultiSet = List.fold (fun acc elm -> MultiSet.add (fst elm) (snd elm) acc) newSet newPieces
-                    Print.printHand pieces (newPiecesMultiSet)
+                    //Print.printHand pieces (newPiecesMultiSet)
 
                     let newBoardState = List.fold (fun acc elm -> Map.add(fst elm) (snd(snd elm)) acc) st.boardState ms
                     Thread.Sleep(500)
-                    System.Console.WriteLine("YOUR HAND IS NOW")
-                    Print.printHand pieces (addNewLetters)
+                    //System.Console.WriteLine("YOUR HAND IS NOW")
+                    //Print.printHand pieces (addNewLetters)
 
 
                     let st' = State.mkState st.playerNumber addNewLetters newBoardState st.numPlayers st.board newTurn st.dict
