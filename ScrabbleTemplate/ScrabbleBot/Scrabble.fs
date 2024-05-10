@@ -300,9 +300,10 @@
                 | true -> results <- t :: results
                 | false -> ()
             if results.Length > 1 then 
-                snd (List.head results)
+                 (List.head results)
             else
-                ""
+                ("","")
+                
                              
 
 
@@ -332,18 +333,18 @@
 
             let rec findNextPiece  acc d =
                 if acc >= List.length boardChars then
-                    output
+                    output.ToString()//TODO pass turn
                 else 
                 match boardChars[acc] with
                 | (coords, char) -> 
-                    let idk =permuteTwo (char.ToString()) inHand |> concatList |> lookupLst
-                    output <- idk :: output
-                findNextPiece (acc + 1) d
-
-                
-
-                   
-                    
+                    let words =permuteTwo (char.ToString()) inHand |> concatList |> lookupLst
+                    if words = ("","") then
+                        findNextPiece (acc + 1) d
+                    else
+                        output <- words :: output
+                        let idk = (lookForViableMove coords (fst words|> Seq.toList |> List.ofSeq) boardState).ToString()
+                        System.Console.WriteLine(idk)
+                        coords.ToString() + output.ToString()
             findNextPiece 0 (dict)
         
 
