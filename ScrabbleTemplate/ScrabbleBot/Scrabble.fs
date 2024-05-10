@@ -66,25 +66,27 @@
             //Reverse again
             let moveList = List.rev moveList
             moveList
-        let findWord (letters: string) (dictionaryPath: string) =
-            let isValidWord (word: string) (letters: string) =
-                let mutable remainingLetters = letters
-                let mutable isValid = true
-                if word.Length % 2 = 0 then // Check if word length is even
-                    isValid <- false
-                for char in word do
-                    match remainingLetters.IndexOf(char) with
-                    | -1 -> isValid <- false
-                    | index ->
-                        remainingLetters <- remainingLetters.Remove(index, 1)
-                isValid
-            
-            let wordQuery = 
-                File.ReadLines(dictionaryPath)
-                |> Seq.tryFind (fun word -> isValidWord word letters)
-            match wordQuery with
-            | Some(word) -> word
-            | None -> "No valid word found"
+
+        let rec permuteTwo (prefix: string) (chars: string list) =
+            let rec permuteHelper (chars: string list) len =
+                match len with
+                | x when x <= 0 -> [[]]
+                | _ ->
+                    [ for i = 0 to List.length chars - 1 do
+                        let prefix' = chars.[i]
+                        let suffix = List.take i chars @ List.skip (i+1) chars
+                        for perm in permuteHelper suffix (len - 1) do
+                            yield prefix' :: perm ]
+
+            [ for len in [2; 4; 6] do
+                for perm in permuteHelper chars len do
+                    yield prefix :: perm ]
+
+
+
+
+
+
 
         let rec permute (str:string) =
             let rec permuteHelper (str: string) len =
@@ -167,8 +169,7 @@
                 else [| |]
 
 
-<<<<<<< HEAD
-            
+
                     
 
         let findWords (characters : char list) (trie : Dict) =
@@ -196,11 +197,10 @@
             // Start the backtrack with an empty prefix and the root of the trie
             backtrack characters trie "" []
 
-=======
->>>>>>> InitialBotLogic
 
 
         let rec recursiveStep (nextStep : option<bool * Dict>) (myString : string)  (indexTracker : int) =      
+
             match nextStep with   
             | Some (_, dict) -> 
                 if indexTracker = String.length myString then 
@@ -209,8 +209,7 @@
                     let newStep = step myString[indexTracker] dict // This line ensures the computation is done
                     recursiveStep newStep myString (indexTracker+1)
             | None -> None
-
-        let iterateOverList (wordList : list<string>) = 
+        let iterateOverList(wordList : list<string>) = 
             let mutable results : string list = []
             for str in wordList do 
                 let mutable addToList = false
@@ -232,56 +231,78 @@
             for str in wordList do 
                 result <- result + string (fst str) + "\n"
             result
+
+        let stepTest = step 'A' (dict false)
+        
+
+        let step2 = 
+            match stepTest with
+            | Some (_, dict) -> step 'B' dict 
+            | None -> None
+
+        let step3 = 
+            match step2 with
+            | Some (_, dict) -> step 'C' dict |> string |> printfn "%A"
+            | None -> printfn "None"
+
+        let concatList (lst : list<list<string>>) : (string * string) list =
+            let mutable results : list<string*string> = []
+            for strLst in lst do
+                let mutable word = ""
+                let mutable pieces = ""
+                for str in strLst do
+
+                    match str.Length with
+                    | 1 -> word <- word + str
+                    | 3 -> word <- word + string str.[1]; pieces <- pieces + " " + str
+                    | _ -> word <- word + string str.[2]; pieces <- pieces + " " + str
+                results <- (word , pieces) :: results
+            List.rev results
+        let lookupLst lst  =
+            let mutable results : list<string*string>= []
+            for t in lst do
+                let isWord = lookup (fst t) (dict false) 
+                match isWord with
+                | true -> results <- t :: results
+                | false -> ()
+            snd (List.head results)
+
+                             
+
+
+        let checkStrings lst : list<list<string>> =
+            let mutable results : list<list<string>> = []
+            for str in lst do
+                let mutable word = []
+                for char in str do
+                    word <- char :: word
+                results <- word :: results
+            results
+
         let secondMove (hand) (boardState : Map<coord, (char * int)>) (pieces : Map<uint32, tile>) d = 
             let boardChars = getAllCharacters boardState
-            let inHand = getCharsInHand hand pieces
-            let word list = []
-            let mutable word = ""
+            let inHand = getCharValues hand pieces
+            let mutable output = []
             let rec findNextPiece  acc d =
-                if acc = List.length boardChars then
-                    word
+                if acc >= List.length boardChars then
+                    output
                 else 
                 match boardChars[acc] with
                 | (coords, char) -> 
-                    let check =lookup (word + string char) d
-                    match check with
-                    | true -> 
-                        printfn "The word is in the dictionary %s" word
-                        word
-                    | false ->
-                        word <- word + string char
-                        let rec checkHand rest = 
-                            match rest with
-                            | [] -> 
-                                //TODO should run find next piece with acc+1
-                                printfn "No more letters in hand"
-                                word
-                            | char :: rest -> 
-                                let check2 = (lookup (word + (string char)) d)
-                                match check2 with
-                                | true -> 
-                                    printfn "The word is in the dictionary %s" (word + (string char))
-                                    (word + (string char))
-                                | false ->
-                                    let newDict = step char d
-                                    let newDictValue = match newDict with
-                                                        | Some (_, dict) -> dict
-                                                        | None -> dict false
-                                    
-                                    word <- word + (string char)
-                                    checkHand rest
-                        checkHand inHand
-                        
-            findNextPiece 0 (dict false)
+                    let idk =permuteTwo (char.ToString()) inHand |> concatList |> lookupLst
+                    output <- idk :: output
+                findNextPiece (acc + 1) d
+
+                
+
+                   
+                    
+            findNextPiece 0 (dict)
         
 
 
                 
 
-
-        let makeFirstMove (myHand : MultiSet.MultiSet<uint32>) =
-            let tester = None
-            tester
 
 
     module RegEx =
@@ -344,14 +365,16 @@
             let rec aux (st : State.state) = 
                 if (State.playerTurn st = State.playerNumber st) then
                     Thread.Sleep(3000)
+
                     Print.printHand pieces (st.hand)
-                    Console.WriteLine ("This is second"+BotLogic.secondMove st.hand st.boardState pieces st.dict)
+
                     //Used to test bot finding first word
                     let letters =String.Concat(BotLogic.getCharsInHand st.hand pieces)
-                    let dictionaryPath = "Dictionaries/English.txt"
-                    let word = BotLogic.findWord letters dictionaryPath
                     let allPerms = BotLogic.permute letters
                     System.Console.WriteLine("The bot found these possible moves")
+                    Console.WriteLine (BotLogic.secondMove st.hand st.boardState pieces st.dict)
+                    //System.Console.WriteLine(((BotLogic.permuteTwo "A" (BotLogic.getCharValues st.hand pieces))|> BotLogic.concatList)|> BotLogic.lookupLst)
+                    //BotLogic.step3
                     System.Console.WriteLine(BotLogic.iterateOverList allPerms)
                     BotLogic.getCharValues st.hand pieces 
                     let input = System.Console.ReadLine()
