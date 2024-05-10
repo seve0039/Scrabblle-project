@@ -113,10 +113,10 @@
                         let suffix = List.take i chars @ List.skip (i+1) chars
                         for perm in permuteHelper suffix (len - 1) do
                             yield prefix' :: perm ]
-
             [ for len in [2; 4; 6] do
                 for perm in permuteHelper chars len do
-                    yield prefix :: perm ]
+                    yield prefix :: perm 
+                    ]
 
 
 
@@ -134,7 +134,6 @@
                         let suffix = str.[0..i-1] + str.[i+1..]
                         for perm in permuteHelper suffix (len - 1) do
                             yield prefix + perm ]
-            
             [ for len in [3; 5; 7] do
                 for perm in permuteHelper str len do
                     yield perm ]
@@ -300,8 +299,10 @@
                 match isWord with
                 | true -> results <- t :: results
                 | false -> ()
-            snd (List.head results)
-
+            if results.Length > 1 then 
+                snd (List.head results)
+            else
+                ""
                              
 
 
@@ -328,6 +329,7 @@
             let boardChars = getAllCharacters boardState
             let inHand = getCharValues hand pieces
             let mutable output = []
+
             let rec findNextPiece  acc d =
                 if acc >= List.length boardChars then
                     output
@@ -417,7 +419,7 @@
                     let letters =String.Concat(BotLogic.getCharsInHand st.hand pieces)
                     let allPerms = BotLogic.permute letters
                     //System.Console.WriteLine("The bot found these possible moves")
-                    //Console.WriteLine (BotLogic.secondMove st.hand st.boardState pieces st.dict)
+                    Console.WriteLine (BotLogic.secondMove st.hand st.boardState pieces st.dict)
                     //System.Console.WriteLine(((BotLogic.permuteTwo "A" (BotLogic.getCharValues st.hand pieces))|> BotLogic.concatList)|> BotLogic.lookupLst)
                     //BotLogic.step3
                     let playableWords = BotLogic.iterateOverList allPerms
