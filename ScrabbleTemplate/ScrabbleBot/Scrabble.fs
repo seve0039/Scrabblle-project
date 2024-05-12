@@ -162,43 +162,42 @@
                     if horizontal then
                         if readTile boardState x (y + 1) = '0' && readTile boardState x (y - 1) = '0' then
                             if index = 1 then
-                                if readTile boardState (x - 1) y = '0' then
-                                    Array.append [| index |] (checkTiles boardState startCoords (index + 1) limit horizontal)
+                                if readTile boardState (x - 2) y = '0' then
+                                    Array.append [| (x, y) |] (checkTiles boardState startCoords (index + 1) limit horizontal)
                                 else
                                     [| |]
                             else if index = limit then
                                 if readTile boardState (x + 1) y = '0' then
-                                    [| index |]
+                                    [| (x, y) |]
                                 else
                                     [| |]
                             else 
-                                Array.append [| index |] (checkTiles boardState startCoords (index + 1) limit horizontal)
+                                Array.append [| (x, y) |] (checkTiles boardState startCoords (index + 1) limit horizontal)
                         else [| |]
                     else
                         if readTile boardState (x + 1) y = '0' && readTile boardState (x - 1) y = '0' then
                             if index = 1 then
-                                if readTile boardState x (y - 1) = '0' then
-                                    Array.append [| index |] (checkTiles boardState startCoords (index + 1) limit horizontal)
+                                if readTile boardState x (y - 2) = '0' then
+                                    Array.append [| (x, y) |] (checkTiles boardState startCoords (index + 1) limit horizontal)
                                 else
                                     [| |]
                             else if index = limit then
                                 if readTile boardState x (y + 1) = '0' then
-                                    [| index |]
+                                    [| (x, y) |]
                                 else
                                     [| |]
                             else 
-                                Array.append [| index |] (checkTiles boardState startCoords (index + 1) limit horizontal)
+                                Array.append [| (x, y) |] (checkTiles boardState startCoords (index + 1) limit horizontal)
                         else [| |]
                 else 
                     [| |]
 
-
-            let horizontalPlacementArray = checkTiles boardState coords 1 (List.length word) true
-            if(Array.length horizontalPlacementArray = List.length word) then
+            let horizontalPlacementArray = checkTiles boardState coords 1 (List.length word - 1) true
+            if(Array.length horizontalPlacementArray = (List.length word - 1)) then
                 horizontalPlacementArray
             else
-                let verticalPlacementArray = checkTiles boardState coords 1 (List.length word) false
-                if(Array.length verticalPlacementArray = List.length word) then
+                let verticalPlacementArray = checkTiles boardState coords 1 (List.length word - 1) false
+                if(Array.length verticalPlacementArray = (List.length word - 1)) then
                     verticalPlacementArray
                 else [| |]
 
@@ -342,8 +341,9 @@
                         findNextPiece (acc + 1) d
                     else
                         output <- words :: output
-                        let idk = (lookForViableMove coords (fst words|> Seq.toList |> List.ofSeq) boardState).ToString()
+                        let idk = (lookForViableMove coords (fst words|> Seq.toList |> List.ofSeq) boardState)
                         System.Console.WriteLine(idk)
+                        printfn "%A" idk
                         coords.ToString() + output.ToString()
             findNextPiece 0 (dict)
         
