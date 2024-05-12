@@ -55,11 +55,10 @@
 
             //Get every element of each list, convert them to string, combine them and add them to the new list
             for i in 0 .. listLength-1 do 
-                let mutable moveString = ""
                 let idString = handToList[i].ToString()
                 let charString = charList[i].ToString()
                 let pointString = pointList[i].ToString()      
-                moveString <- idString + charString + pointString
+                let moveString = idString + charString + pointString
                 moveList <- moveString :: moveList
                 wordValueMap <- Map.add charString moveString wordValueMap
                 ()
@@ -324,7 +323,13 @@
                 xCoordinate <- xCoordinate+1
             resultString
             
-
+        let combineArrays (strArr: string array) (tupleArr: (int * int) array) =
+            let strPart = Array.toList strArr
+            let tuplePart = tupleArr |> Array.map (fun (x, y) -> sprintf "%d %d" x y) |> Array.toList
+            let combined = List.zip strPart tuplePart
+                        |> List.collect (fun (s, t) -> [s; t])
+                        |> String.concat " "
+            combined
         let secondMove (hand) (boardState : Map<coord, (char * int)>) (pieces : Map<uint32, tile>) d = 
             let boardChars = getAllCharacters boardState
             let inHand = getCharValues hand pieces
@@ -342,9 +347,23 @@
                     else
                         output <- words :: output
                         let idk = (lookForViableMove coords (fst words|> Seq.toList |> List.ofSeq) boardState)
-                        System.Console.WriteLine(idk)
-                        printfn "%A" idk
-                        coords.ToString() + output.ToString()
+                        //System.Console.WriteLine(idk)
+                        let secondElementParts = snd words
+                        let secondElementParts = secondElementParts.Split(' ', '\n')
+                        let secondElementParts = secondElementParts[1..]
+                        //printfn "%A" secondElementParts
+                        
+                        if idk.Length > 0 then
+                            let strPart = Array.toList secondElementParts
+                            let tuplePart = idk |> Array.map (fun (x, y) -> sprintf "%d %d" x y) |> Array.toList
+                            let combined = List.zip strPart tuplePart
+                                        |> List.collect (fun (s, t) -> [t; s])
+                                        |> String.concat " "
+                            printfn "%A" idk
+                            combined
+                        else
+                            findNextPiece (acc + 1) d
+                        //coords.ToString() + output.ToString()
             findNextPiece 0 (dict)
         
 
@@ -420,18 +439,20 @@
                     let letters =String.Concat(BotLogic.getCharsInHand st.hand pieces)
                     let allPerms = BotLogic.permute letters
                     //System.Console.WriteLine("The bot found these possible moves")
-                    Console.WriteLine (BotLogic.secondMove st.hand st.boardState pieces st.dict)
+                    
                     //System.Console.WriteLine(((BotLogic.permuteTwo "A" (BotLogic.getCharValues st.hand pieces))|> BotLogic.concatList)|> BotLogic.lookupLst)
                     //BotLogic.step3
                     let playableWords = BotLogic.iterateOverList allPerms
                     let mapValues = BotLogic.getCharValuesMap st.hand pieces
                     let mutable input = ""
                     if (st.boardState.IsEmpty) then 
-                        input <- System.Console.ReadLine()
-                        //input <- BotLogic.makeFirstMove playableWords mapValues
+                        //input <- System.Console.ReadLine()
+                        input <- BotLogic.makeFirstMove playableWords mapValues
                         
                     else
-                        input <- System.Console.ReadLine()
+                        Console.WriteLine (BotLogic.secondMove st.hand st.boardState pieces st.dict)
+                        
+                        input <- BotLogic.secondMove st.hand st.boardState pieces st.dict
     
                     counter <- counter + 1
                     let move = RegEx.parseMove input
