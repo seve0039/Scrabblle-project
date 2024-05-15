@@ -138,7 +138,10 @@
             | Some (c, _) -> c
             | None -> '0'
             
-        let lookForViableMove coords word boardState topLeftCoords bottomRightCoords prefix = 
+        let lookForViableMove coords word boardState topLeftCoords bottomRightCoords =
+            let prefix =
+                if(readTile boardState (fst coords) (snd coords) = List.head word) true
+                else false
             let rec checkTiles startCoords index limit horizontal =
                 let nextPos = 
                     if prefix then 1
@@ -282,7 +285,7 @@
                         findNextPiece (acc + 1) d
                     else
                         output <- words :: output
-                        let idk = (lookForViableMove coords (fst words|> Seq.toList |> List.ofSeq) boardState (-7, -7) (7, 7) true)
+                        let idk = (lookForViableMove coords (fst words|> Seq.toList |> List.ofSeq) boardState (-7, -7) (7, 7))
                         //System.Console.WriteLine(idk)
                         let secondElementParts = snd words
                         let secondElementParts = secondElementParts.Split(' ', '\n')
