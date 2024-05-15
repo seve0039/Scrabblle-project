@@ -283,10 +283,17 @@
 
         let lookupLst lst =
             let rec lookupWords accResults = function
-                | [] -> accResults
+
+                | [] -> 
+                    accResults
                 | t :: tail ->
-                    //Console.WriteLine((fst t):string)
-                    let isWord = lookup (fst t) (dict false)
+
+                    let mutable isWord = false
+                    let newWord = (fst t).ToString()
+                    if newWord[0] = newWord[newWord.Length - 1] then      
+                        isWord <- false
+                    else
+                        isWord <- lookup (fst t) (dict false)
                     match isWord with
                     | true -> lookupWords (t :: accResults) tail
                     | false -> lookupWords accResults tail
@@ -294,7 +301,8 @@
             let results = lookupWords [] lst
             match results with
             | [] -> ("", "")
-            | hd :: _ -> hd
+            | hd :: _ -> 
+                hd
 
 
         let makeFirstMove (playableWords : string List) (wordsMapValue : Map<string,string>) =
