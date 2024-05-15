@@ -103,7 +103,9 @@
                             yield prefix' :: perm ]
             [ for len in [2; 4; 6] do
                 for perm in permuteHelper chars len do
-                        yield prefix :: perm ]
+                    yield prefix :: perm
+                    yield perm @ [prefix]]
+
 
 
 
@@ -208,23 +210,21 @@
                     let newStep = step myString[indexTracker] dict // This line ensures the computation is done
                     recursiveStep newStep myString (indexTracker+1)
             | None -> None
-        let iterateOverList(wordList : list<string>) = 
-            let mutable results : string list = []
-            for str in wordList do 
-                let mutable addToList = false
-                let mutable boolTester : (bool*Dict) option = None
-                
-                let initialRecu= step str.[0] (dict false)
-                boolTester <- recursiveStep initialRecu str 1
-
-                match boolTester with 
-                | Some(true, _)  -> 
-                    results <- str :: results
-                    
-                | _ -> 
-                    ()
+        let iterateOverList(wordList : list<string>) =
+            let rec iterate (words : string list) acc =
+                match words with
+                | [] -> acc
+                | str :: rest ->
+                    let initialRecu = step str.[0] (dict false)
+                    let boolTester = recursiveStep initialRecu str 1
+                    let updatedAcc =
+                        match boolTester with
+                        | Some(true, _) -> str :: acc
+                        | _ -> acc
+                    iterate rest updatedAcc
             
-            results
+            iterate wordList []
+
 
         let concatList (lst : list<list<string>>) : (string * string) list =
             let buildWordPieces strLst =
@@ -242,6 +242,7 @@
                 | strLst :: rest ->
                     let word, pieces = buildWordPieces strLst
                     processLists ((word, pieces) :: accResults) rest
+                    
             
             processLists [] lst
 
@@ -249,6 +250,7 @@
             let rec lookupWords accResults = function
                 | [] -> accResults
                 | t :: tail ->
+                    //Console.WriteLine((fst t):string)
                     let isWord = lookup (fst t) (dict false)
                     match isWord with
                     | true -> lookupWords (t :: accResults) tail
@@ -261,13 +263,15 @@
 
 
         let makeFirstMove (playableWords : string List) (wordsMapValue : Map<string,string>) =
-            let mutable xCoordinate = 0
-            let mutable resultString = ""
-            for char in playableWords[0] do
-                match Map.tryFind (string char) wordsMapValue with
-                | Some(value) -> resultString <- resultString + " 0 " + xCoordinate.ToString() + " " + value
-                xCoordinate <- xCoordinate+1
+            let resultString =
+                playableWords.[0]
+                |> Seq.mapi (fun i char ->
+                    match Map.tryFind (string char) wordsMapValue with
+                    | Some(value) -> $" 0 {i} {value}"
+                    | _ -> "")
+                |> String.concat ""
             resultString
+
             
         let secondMove (hand) (boardState : Map<coord, (char * int)>) (pieces : Map<uint32, tile>) d = 
             let boardChars = getAllCharacters boardState
@@ -367,13 +371,12 @@
     module Scrabble =
         open System.Threading
         let playGame cstream pieces (st : State.state) =
-            let mutable counter = 0
             let rec aux (st : State.state) = 
                 if (((State.playerTurn st - 1u) % State.numPlayers st) + 1u = State.playerNumber st) then
                     Thread.Sleep(3000)
 
                     Print.printHand pieces (st.hand)
-
+                    Thread.Sleep(1000)
                     //Used to test bot finding first word
                     let letters =String.Concat(BotLogic.getCharsInHand st.hand pieces)
                     let allPerms = BotLogic.permute letters
@@ -383,24 +386,19 @@
                     //BotLogic.step3
                     let playableWords = BotLogic.iterateOverList allPerms
                     let mapValues = BotLogic.getCharValuesMap st.hand pieces
-                    let mutable input = ""
-                    if (st.boardState.IsEmpty) then 
-                        //input <- System.Console.ReadLine()
-                        input <- BotLogic.makeFirstMove playableWords mapValues
-                        
-                    else
-                        Console.WriteLine (BotLogic.secondMove st.hand st.boardState pieces st.dict)
-                        
-                        input <- BotLogic.secondMove st.hand st.boardState pieces st.dict
-    
-                    counter <- counter + 1
-                    let move = RegEx.parseMove input
 
-                    debugPrint (sprintf "Player %d -> Server:\n%A\n" (State.playerNumber st) move) //
-                    if input = ""then  
-                        send cstream (SMPass)
-                    else
-                        send cstream (SMPlay move)
+                    
+
+
+
+                    if (st.boardState.IsEmpty) then
+                        send cstream (SMPlay (RegEx.parseMove (BotLogic.makeFirstMove playableWords mapValues)))
+                    else 
+                        let secondMove = BotLogic.secondMove st.hand st.boardState pieces st.dict
+                        if secondMove = ""then  
+                            send cstream (SMPass)
+                        else
+                            send cstream (SMPlay (RegEx.parseMove (secondMove)))
 
                 let msg = recv cstream
     //            debugPrint (sprintf "Player %d <- Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
@@ -437,7 +435,7 @@
                 | RCM (CMPlayFailed (pid, ms)) ->
                     (* Failed play. Update your state *)
                     let st' = State.mkState st.playerNumber st.hand st.boardState st.numPlayers st.board newTurn st.dict
-                    aux st'
+                    aux st' 
                 | RCM (CMPassed (pid)) ->
                     let st' = State.mkState st.playerNumber st.hand st.boardState st.numPlayers st.board newTurn st.dict
                     aux st'
@@ -447,7 +445,7 @@
                 | RGPE err ->
                     printfn "Gameplay Error:\n%A" err;
                     let st' = State.mkState st.playerNumber st.hand st.boardState st.numPlayers st.board newTurn st.dict
-                    aux st'
+                    aux st' 
 
             aux st
 
