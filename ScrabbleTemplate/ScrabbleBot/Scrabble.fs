@@ -436,7 +436,7 @@
         let playGame cstream pieces (st : State.state) =
             let mutable counter = 0
             let rec aux (st : State.state) = 
-                if (State.playerTurn st = State.playerNumber st) then
+                if (((State.playerTurn st - 1u) % State.numPlayers st) + 1u = State.playerNumber st) then
                     Thread.Sleep(3000)
 
                     Print.printHand pieces (st.hand)
@@ -467,17 +467,12 @@
 
                     debugPrint (sprintf "Player %d -> Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
                     send cstream (SMPlay move)
-
-                    let mutable newTurn = (State.playerTurn st) + 1u
-                    if(newTurn = (State.numPlayers st) + 1u) then
-                        newTurn <- 1u
+                    
 
                 let msg = recv cstream
     //            debugPrint (sprintf "Player %d <- Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
 
-                let mutable newTurn = (State.playerTurn st) + 1u
-                if(newTurn = (State.numPlayers st) + 1u) then
-                    newTurn <- 1u
+                let newTurn = (State.playerTurn st) + 1u
 
                 match msg with
                 | RCM (CMPlaySuccess(ms, points, newPieces)) ->
