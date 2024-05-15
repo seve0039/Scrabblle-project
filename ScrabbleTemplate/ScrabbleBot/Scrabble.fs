@@ -352,7 +352,7 @@
                         findNextPiece (acc + 1) d
                     else
                         output <- words :: output
-                        let idk = (lookForViableMove coords (fst words|> Seq.toList |> List.ofSeq) boardState (-7, -7) (7, 7))
+                        let idk = (lookForViableMove coords (fst words|> Seq.toList |> List.ofSeq) boardState (-7, -7) (7, 7) true)
                         //System.Console.WriteLine(idk)
                         let secondElementParts = snd words
                         let secondElementParts = secondElementParts.Split(' ', '\n')
