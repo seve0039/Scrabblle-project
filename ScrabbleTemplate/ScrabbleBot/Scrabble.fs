@@ -158,7 +158,10 @@
                         if readTile boardState x (y + 1) = '0' && readTile boardState x (y - 1) = '0' then
                             if index = 1 then
                                 if readTile boardState (x - nextPos * 2) y = '0' then
-                                    Array.append [| (x, y) |] (checkTiles (index + nextPos) limit horizontal)
+                                    if nextPos = 1 then
+                                        Array.append [| (x, y) |] (checkTiles (index + 1) limit horizontal)
+                                    else
+                                        Array.append (checkTiles (index + 1) limit horizontal) [| (x, y) |]
                                 else
                                     [| |]
                             else if index = limit then
@@ -167,13 +170,19 @@
                                 else
                                     [| |]
                             else 
-                                Array.append [| (x, y) |] (checkTiles (index + nextPos) limit horizontal)
+                                if nextPos = 1 then
+                                    Array.append [| (x, y) |] (checkTiles (index + 1) limit horizontal)
+                                else
+                                    Array.append (checkTiles (index + 1) limit horizontal) [| (x, y) |]
                         else [| |]
                     else
                         if readTile boardState (x + 1) y = '0' && readTile boardState (x - 1) y = '0' then
                             if index = 1 then
                                 if readTile boardState x (y - nextPos * 2) = '0' then
-                                    Array.append [| (x, y) |] (checkTiles (index + nextPos) limit horizontal)
+                                    if nextPos = 1 then
+                                        Array.append [| (x, y) |] (checkTiles (index + 1) limit horizontal)
+                                    else
+                                        Array.append (checkTiles (index + 1) limit horizontal) [| (x, y) |]
                                 else
                                     [| |]
                             else if index = limit then
@@ -182,10 +191,14 @@
                                 else
                                     [| |]
                             else 
-                                Array.append [| (x, y) |] (checkTiles (index + nextPos) limit horizontal)
+                                if nextPos = 1 then
+                                    Array.append [| (x, y) |] (checkTiles (index + 1) limit horizontal)
+                                else
+                                    Array.append (checkTiles (index + 1) limit horizontal) [| (x, y) |]
                         else [| |]
                 else 
                     [| |]
+
 
             let horizontalPlacementArray = checkTiles 1 (List.length word - 1) true
             if(Array.length horizontalPlacementArray = (List.length word - 1)) then
@@ -272,7 +285,6 @@
         let secondMove (hand) (boardState : Map<coord, (char * int)>) (pieces : Map<uint32, tile>) d = 
             let boardChars = getAllCharacters boardState
             let inHand = getCharValues hand pieces
-            let mutable output = []
 
             let rec findNextPiece  acc d =
                 if acc >= List.length boardChars then
@@ -284,9 +296,7 @@
                     if words = ("","") then
                         findNextPiece (acc + 1) d
                     else
-                        output <- words :: output
                         let idk = (lookForViableMove coords (fst words|> Seq.toList |> List.ofSeq) boardState (-7, -7) (7, 7))
-                        //System.Console.WriteLine(idk)
                         let secondElementParts = snd words
                         let secondElementParts = secondElementParts.Split(' ', '\n')
                         let secondElementParts = secondElementParts[1..]
