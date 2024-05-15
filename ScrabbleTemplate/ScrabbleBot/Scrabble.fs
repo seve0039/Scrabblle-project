@@ -141,20 +141,16 @@
             | None -> '0'
             
         let lookForViableMove coords word boardState topLeftCoords bottomRightCoords =
-            let prefix =
-                if(readTile boardState (fst coords) (snd coords) = List.head word) true
-                else false
-            let rec checkTiles startCoords index limit horizontal =
-                let nextPos = 
-                    if prefix then 1
-                    else -1
-
+            let nextPos = 
+                if(readTile boardState (fst coords) (snd coords) = (List.head word)) then 1
+                else -1
+            let rec checkTiles index limit horizontal =
                 let x = 
-                    if horizontal then (fst startCoords) + index * nextPos
-                    else fst startCoords * nextPos
+                    if horizontal then (fst coords) + index * nextPos
+                    else (fst coords)
                 let y =
-                    if horizontal then snd startCoords * nextPos
-                    else (snd startCoords) + index * nextPos
+                    if horizontal then (snd coords)
+                    else (snd coords) + index * nextPos
                 if topLeftCoords <> (0, 0) && bottomRightCoords <> (0, 0) && (x > fst bottomRightCoords || x < fst topLeftCoords || y > snd bottomRightCoords || y < snd topLeftCoords) then
                     [| |]
                 elif readTile boardState x y = '0' then
@@ -162,7 +158,7 @@
                         if readTile boardState x (y + 1) = '0' && readTile boardState x (y - 1) = '0' then
                             if index = 1 then
                                 if readTile boardState (x - nextPos * 2) y = '0' then
-                                    Array.append [| (x, y) |] (checkTiles startCoords (index + 1) limit horizontal)
+                                    Array.append [| (x, y) |] (checkTiles (index + nextPos) limit horizontal)
                                 else
                                     [| |]
                             else if index = limit then
@@ -171,13 +167,13 @@
                                 else
                                     [| |]
                             else 
-                                Array.append [| (x, y) |] (checkTiles startCoords (index + nextPos) limit horizontal)
+                                Array.append [| (x, y) |] (checkTiles (index + nextPos) limit horizontal)
                         else [| |]
                     else
                         if readTile boardState (x + 1) y = '0' && readTile boardState (x - 1) y = '0' then
                             if index = 1 then
                                 if readTile boardState x (y - nextPos * 2) = '0' then
-                                    Array.append [| (x, y) |] (checkTiles startCoords (index + nextPos) limit horizontal)
+                                    Array.append [| (x, y) |] (checkTiles (index + nextPos) limit horizontal)
                                 else
                                     [| |]
                             else if index = limit then
@@ -186,16 +182,16 @@
                                 else
                                     [| |]
                             else 
-                                Array.append [| (x, y) |] (checkTiles startCoords (index + nextPos) limit horizontal)
+                                Array.append [| (x, y) |] (checkTiles (index + nextPos) limit horizontal)
                         else [| |]
                 else 
                     [| |]
 
-            let horizontalPlacementArray = checkTiles coords 1 (List.length word - 1) true
+            let horizontalPlacementArray = checkTiles 1 (List.length word - 1) true
             if(Array.length horizontalPlacementArray = (List.length word - 1)) then
                 horizontalPlacementArray
             else
-                let verticalPlacementArray = checkTiles coords 1 (List.length word - 1) false
+                let verticalPlacementArray = checkTiles 1 (List.length word - 1) false
                 if(Array.length verticalPlacementArray = (List.length word - 1)) then
                     verticalPlacementArray
                 else [| |]
