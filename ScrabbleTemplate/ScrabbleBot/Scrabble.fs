@@ -14,17 +14,6 @@
         
         let dict = mkDict (File.ReadLines "Dictionaries/English.txt") None 
 
-        let firstMove hand dict =  
-            ""
-        let optionToVal value =
-            match value with 
-            | Some x -> x
-            | None -> failwith "Should never happen"
-
-        let valToOption value =
-            match value with 
-            | x -> Some x
-
         let getCharFromString = fun (s : string) -> s.[6]
         let getCharsInHand (hand : MultiSet.MultiSet<uint32>) (pieces : Map<uint32,'a>) =
             let list = MultiSet.toList hand
@@ -114,8 +103,8 @@
                             yield prefix' :: perm ]
             [ for len in [2; 4; 6] do
                 for perm in permuteHelper chars len do
-                    yield prefix :: perm 
-                    ]
+                        yield prefix :: perm ]
+
 
 
 
@@ -200,37 +189,6 @@
                     verticalPlacementArray
                 else [| |]
 
-
-
-                    
-
-        let findWords (characters : char list) (trie : Dict) =
-            let rec backtrack (chars : char list) (trieNode : Dict) (prefix : string) (validWords : string list) =
-                match chars with
-                | [] -> // End of characters
-                    if lookup prefix trie then
-                        prefix :: validWords // If the current prefix forms a valid word, add it to the list
-                    else
-                        validWords
-                | c :: rest ->
-                    match step c trieNode with
-                    | Some (isWord, nextNode) ->
-                        let updatedPrefix = prefix + string c
-                        let nextValidWords =
-                            if isWord then
-                                updatedPrefix :: validWords // If we reached a valid word, add it to the list
-                            else
-                                validWords
-                        // Recursively backtrack with remaining characters
-                        backtrack rest nextNode updatedPrefix nextValidWords
-                    | None -> // If no valid step found, return current valid words
-                        validWords
-
-            // Start the backtrack with an empty prefix and the root of the trie
-            backtrack characters trie "" []
-
-
-
         let rec recursiveStep (nextStep : option<bool * Dict>) (myString : string)  (indexTracker : int) =      
 
             match nextStep with   
@@ -258,61 +216,40 @@
                     ()
             
             results
-        let listToString (wordList : list<char * coord>) = 
-            let mutable result = ""
-            for str in wordList do 
-                result <- result + string (fst str) + "\n"
-            result
-
-        let stepTest = step 'A' (dict false)
-        
-
-        let step2 = 
-            match stepTest with
-            | Some (_, dict) -> step 'B' dict 
-            | None -> None
-
-        let step3 = 
-            match step2 with
-            | Some (_, dict) -> step 'C' dict |> string |> printfn "%A"
-            | None -> printfn "None"
 
         let concatList (lst : list<list<string>>) : (string * string) list =
-            let mutable results : list<string*string> = []
-            for strLst in lst do
-                let mutable word = ""
-                let mutable pieces = ""
-                for str in strLst do
+            let buildWordPieces strLst =
+                let rec buildWordPieces' accWord accPieces = function
+                    | [] -> (accWord, accPieces)
+                    | (str:string) :: tail ->
+                        match str.Length with
+                        | 1 -> buildWordPieces' (accWord + str) accPieces tail
+                        | 3 -> buildWordPieces' (accWord + string str.[1]) (accPieces + " " + str) tail
+                        | _ -> buildWordPieces' (accWord + string str.[2]) (accPieces + " " + str) tail
+                buildWordPieces' "" "" strLst
+            
+            let rec processLists accResults = function
+                | [] -> List.rev accResults
+                | strLst :: rest ->
+                    let word, pieces = buildWordPieces strLst
+                    processLists ((word, pieces) :: accResults) rest
+            
+            processLists [] lst
 
-                    match str.Length with
-                    | 1 -> word <- word + str
-                    | 3 -> word <- word + string str.[1]; pieces <- pieces + " " + str
-                    | _ -> word <- word + string str.[2]; pieces <- pieces + " " + str
-                results <- (word , pieces) :: results
-            List.rev results
-        let lookupLst lst  =
-            let mutable results : list<string*string>= []
-            for t in lst do
-                let isWord = lookup (fst t) (dict false) 
-                match isWord with
-                | true -> results <- t :: results
-                | false -> ()
-            if results.Length > 1 then 
-                 (List.head results)
-            else
-                ("","")
-                
-                             
+        let lookupLst lst =
+            let rec lookupWords accResults = function
+                | [] -> accResults
+                | t :: tail ->
+                    let isWord = lookup (fst t) (dict false)
+                    match isWord with
+                    | true -> lookupWords (t :: accResults) tail
+                    | false -> lookupWords accResults tail
+            
+            let results = lookupWords [] lst
+            match results with
+            | [] -> ("", "")
+            | hd :: _ -> hd
 
-
-        let checkStrings lst : list<list<string>> =
-            let mutable results : list<list<string>> = []
-            for str in lst do
-                let mutable word = []
-                for char in str do
-                    word <- char :: word
-                results <- word :: results
-            results
 
         let makeFirstMove (playableWords : string List) (wordsMapValue : Map<string,string>) =
             let mutable xCoordinate = 0
@@ -323,13 +260,6 @@
                 xCoordinate <- xCoordinate+1
             resultString
             
-        let combineArrays (strArr: string array) (tupleArr: (int * int) array) =
-            let strPart = Array.toList strArr
-            let tuplePart = tupleArr |> Array.map (fun (x, y) -> sprintf "%d %d" x y) |> Array.toList
-            let combined = List.zip strPart tuplePart
-                        |> List.collect (fun (s, t) -> [s; t])
-                        |> String.concat " "
-            combined
         let secondMove (hand) (boardState : Map<coord, (char * int)>) (pieces : Map<uint32, tile>) d = 
             let boardChars = getAllCharacters boardState
             let inHand = getCharValues hand pieces
@@ -337,7 +267,7 @@
 
             let rec findNextPiece  acc d =
                 if acc >= List.length boardChars then
-                    output.ToString()//TODO pass turn
+                    ""//TODO pass turn
                 else 
                 match boardChars[acc] with
                 | (coords, char) -> 
@@ -431,8 +361,6 @@
             let mutable counter = 0
             let rec aux (st : State.state) = 
                 if (State.playerTurn st = State.playerNumber st) then
-                    Thread.Sleep(3000)
-
                     Print.printHand pieces (st.hand)
 
                     //Used to test bot finding first word
@@ -459,8 +387,11 @@
 
 
 
-                    debugPrint (sprintf "Player %d -> Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
-                    send cstream (SMPlay move)
+                    debugPrint (sprintf "Player %d -> Server:\n%A\n" (State.playerNumber st) move) //
+                    if input = ""then  
+                        send cstream (SMPass)
+                    else
+                        send cstream (SMPlay move)
 
                     let mutable newTurn = (State.playerTurn st) + 1u
                     if(newTurn = (State.numPlayers st) + 1u) then
@@ -476,20 +407,16 @@
                 match msg with
                 | RCM (CMPlaySuccess(ms, points, newPieces)) ->
                     (* Successful play by you. Update your state (remove old tiles, add the new ones, change turn, etc) *)
-                    Thread.Sleep(5000)
                     let removedPlayedLetters = List.fold (fun acc elm -> MultiSet.removeSingle (fst(snd(elm))) acc) st.hand ms
                     //System.Console.WriteLine("REMOVED::::::")
                     //System.Console.WriteLine(ms)
                     let addNewLetters = List.fold (fun acc elm -> MultiSet.add (fst elm) (snd elm) acc) removedPlayedLetters newPieces
-                    Thread.Sleep(500)
                     //System.Console.WriteLine("ADDED::::::::::.")
-                    Thread.Sleep(500)
                     let newSet = MultiSet.empty
                     let newPiecesMultiSet = List.fold (fun acc elm -> MultiSet.add (fst elm) (snd elm) acc) newSet newPieces
                     //Print.printHand pieces (newPiecesMultiSet)
 
                     let newBoardState = List.fold (fun acc elm -> Map.add(fst elm) (snd(snd elm)) acc) st.boardState ms
-                    Thread.Sleep(500)
                     //System.Console.WriteLine("YOUR HAND IS NOW")
                     //Print.printHand pieces (addNewLetters)
 
