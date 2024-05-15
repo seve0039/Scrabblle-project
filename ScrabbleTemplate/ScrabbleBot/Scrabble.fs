@@ -10,6 +10,7 @@
     // The RegEx module is only used to parse human input. It is not used for the final product.
 
     module BotLogic =
+        open System.Threading
         open ScrabbleUtil.Dictionary
         
         let dict = mkDict (File.ReadLines "Dictionaries/English.txt") None 
@@ -30,11 +31,14 @@
             //For every set in pointSet, get the 2nd element, which is the default point a letter rewards
             for newSet in pointSet do
                 let mutable count = 1
-                for elem in newSet do
-                    count <- count + 1
-                    if count % 2 = 0 then
-                        pointList <- snd elem :: pointList
-
+                let setLegnth = Set.count newSet
+                if setLegnth > 1 then
+                    pointList <- 0 :: pointList
+                else
+                    for elem in newSet do
+                        count <- count + 1
+                        if count % 2 = 0 then
+                            pointList <- snd elem :: pointList
             //Lists are in reverse order for some reason? So reverse reverse them to good order
             let pointList = List.rev pointList
             let listLength = List.length charList
@@ -44,7 +48,15 @@
 
             //Get every element of each list, convert them to string, combine them and add them to the new list
             for i in 0 .. listLength-1 do 
-                let idString = handToList[i].ToString()
+                let mutable idString = ""
+                match pointList[i].ToString() with
+                | "0" -> 
+                    idString <- "0"
+                    ()
+                | other -> 
+                    idString <- handToList[i].ToString()
+                    ()
+
                 let charString = charList[i].ToString()
                 let pointString = pointList[i].ToString()      
                 let moveString = idString + charString + pointString
@@ -54,21 +66,28 @@
 
             //Reverse again
             let moveList = List.rev moveList
+            //System.Console.WriteLine(moveList)
             moveList
         let getCharValuesMap (hand : MultiSet.MultiSet<uint32>) (pieces : Map<uint32,'a>) =
             let handToList = MultiSet.toList hand
+
             let mutable pointList = []
             let charList = (List.map (fun elm -> (Map.find (elm) pieces).ToString() |> getCharFromString)) handToList
-            //System.Console.WriteLine(charList)
+
             let pointSet =List.map (fun elm -> (Map.find (elm) pieces) ) handToList
+
 
             //For every set in pointSet, get the 2nd element, which is the default point a letter rewards
             for newSet in pointSet do
                 let mutable count = 1
-                for elem in newSet do
-                    count <- count + 1
-                    if count % 2 = 0 then
-                        pointList <- snd elem :: pointList
+                let setLegnth = Set.count newSet
+                if setLegnth > 1 then
+                    pointList <- 0 :: pointList
+                else
+                    for elem in newSet do
+                        count <- count + 1
+                        if count % 2 = 0 then
+                            pointList <- snd elem :: pointList
 
             //Lists are in reverse order for some reason? So reverse reverse them to good order
             let pointList = List.rev pointList
@@ -76,11 +95,18 @@
 
             let mutable wordValueMap = Map.empty<string,string>
             let mutable moveList = []
-
             //Get every element of each list, convert them to string, combine them and add them to the new list
             for i in 0 .. listLength-1 do 
                 let mutable moveString = ""
-                let idString = handToList[i].ToString()
+                let mutable idString = ""
+                match pointList[i].ToString() with
+                | "0" -> 
+                    idString <- "0"
+                    ()
+                | other -> 
+                    idString <- handToList[i].ToString()
+                    ()
+
                 let charString = charList[i].ToString()
                 let pointString = pointList[i].ToString()      
                 moveString <- idString + charString + pointString
@@ -216,7 +242,7 @@
                     
                 | _ -> 
                     ()
-            
+
             results
 
         let concatList (lst : list<list<string>>) : (string * string) list =
@@ -291,7 +317,7 @@
                             let combined = List.zip strPart tuplePart
                                         |> List.collect (fun (s, t) -> [t; s])
                                         |> String.concat " "
-                            printfn "%A" idk
+                            //printfn "%A" idk
                             combined
                         else
                             findNextPiece (acc + 1) d
@@ -300,11 +326,8 @@
         
 
 
-                
-
-
-
     module RegEx =
+
         open System.Text.RegularExpressions
         let (|Regex|_|) pattern input =
             let m = Regex.Match(input, pattern)
@@ -368,10 +391,6 @@
                     //Used to test bot finding first word
                     let letters =String.Concat(BotLogic.getCharsInHand st.hand pieces)
                     let allPerms = BotLogic.permute letters
-                    //System.Console.WriteLine("The bot found these possible moves")
-                    
-                    //System.Console.WriteLine(((BotLogic.permuteTwo "A" (BotLogic.getCharValues st.hand pieces))|> BotLogic.concatList)|> BotLogic.lookupLst)
-                    //BotLogic.step3
                     let playableWords = BotLogic.iterateOverList allPerms
                     let mapValues = BotLogic.getCharValuesMap st.hand pieces
                     let mutable input = ""
@@ -380,10 +399,8 @@
                         input <- BotLogic.makeFirstMove playableWords mapValues
                         
                     else
-                        Console.WriteLine (BotLogic.secondMove st.hand st.boardState pieces st.dict)
-                        
+                        //Console.WriteLine (BotLogic.secondMove st.hand st.boardState pieces st.dict)
                         input <- BotLogic.secondMove st.hand st.boardState pieces st.dict
-    
                     counter <- counter + 1
                     let move = RegEx.parseMove input
 
