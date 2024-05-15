@@ -402,10 +402,9 @@
         let playGame cstream pieces (st : State.state) =
             let rec aux (st : State.state) = 
                 if (((State.playerTurn st - 1u) % State.numPlayers st) + 1u = State.playerNumber st) then
-                    Thread.Sleep(3000)
 
                     Print.printHand pieces (st.hand)
-                    Thread.Sleep(1000)
+
                     //Used to test bot finding first word
                     let letters =String.Concat(BotLogic.getCharsInHand st.hand pieces)
                     let allPerms = BotLogic.permute letters
@@ -419,7 +418,6 @@
                     else
                         //Console.WriteLine (BotLogic.secondMove st.hand st.boardState pieces st.dict)
                         input <- BotLogic.secondMove st.hand st.boardState pieces st.dict
-                    counter <- counter + 1
                     let move = RegEx.parseMove input
 
 
