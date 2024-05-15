@@ -140,55 +140,59 @@
             | Some (c, _) -> c
             | None -> '0'
             
-        let lookForViableMove coords word boardState topLeftCoords bottomRightCoords = 
-            let rec checkTiles boardState startCoords index limit horizontal =
+        let lookForViableMove coords word boardState topLeftCoords bottomRightCoords prefix = 
+            let rec checkTiles startCoords index limit horizontal =
+                let nextPos = 
+                    if prefix then 1
+                    else -1
+
                 let x = 
-                    if horizontal then (fst startCoords) + index
-                    else fst startCoords
+                    if horizontal then (fst startCoords) + index * nextPos
+                    else fst startCoords * nextPos
                 let y =
-                    if horizontal then snd startCoords
-                    else (snd startCoords) + index
+                    if horizontal then snd startCoords * nextPos
+                    else (snd startCoords) + index * nextPos
                 if topLeftCoords <> (0, 0) && bottomRightCoords <> (0, 0) && (x > fst bottomRightCoords || x < fst topLeftCoords || y > snd bottomRightCoords || y < snd topLeftCoords) then
                     [| |]
                 elif readTile boardState x y = '0' then
                     if horizontal then
                         if readTile boardState x (y + 1) = '0' && readTile boardState x (y - 1) = '0' then
                             if index = 1 then
-                                if readTile boardState (x - 2) y = '0' then
-                                    Array.append [| (x, y) |] (checkTiles boardState startCoords (index + 1) limit horizontal)
+                                if readTile boardState (x - nextPos * 2) y = '0' then
+                                    Array.append [| (x, y) |] (checkTiles startCoords (index + 1) limit horizontal)
                                 else
                                     [| |]
                             else if index = limit then
-                                if readTile boardState (x + 1) y = '0' then
+                                if readTile boardState (x + nextPos) y = '0' then
                                     [| (x, y) |]
                                 else
                                     [| |]
                             else 
-                                Array.append [| (x, y) |] (checkTiles boardState startCoords (index + 1) limit horizontal)
+                                Array.append [| (x, y) |] (checkTiles startCoords (index + nextPos) limit horizontal)
                         else [| |]
                     else
                         if readTile boardState (x + 1) y = '0' && readTile boardState (x - 1) y = '0' then
                             if index = 1 then
-                                if readTile boardState x (y - 2) = '0' then
-                                    Array.append [| (x, y) |] (checkTiles boardState startCoords (index + 1) limit horizontal)
+                                if readTile boardState x (y - nextPos * 2) = '0' then
+                                    Array.append [| (x, y) |] (checkTiles startCoords (index + nextPos) limit horizontal)
                                 else
                                     [| |]
                             else if index = limit then
-                                if readTile boardState x (y + 1) = '0' then
+                                if readTile boardState x (y + nextPos) = '0' then
                                     [| (x, y) |]
                                 else
                                     [| |]
                             else 
-                                Array.append [| (x, y) |] (checkTiles boardState startCoords (index + 1) limit horizontal)
+                                Array.append [| (x, y) |] (checkTiles startCoords (index + nextPos) limit horizontal)
                         else [| |]
                 else 
                     [| |]
 
-            let horizontalPlacementArray = checkTiles boardState coords 1 (List.length word - 1) true
+            let horizontalPlacementArray = checkTiles coords 1 (List.length word - 1) true
             if(Array.length horizontalPlacementArray = (List.length word - 1)) then
                 horizontalPlacementArray
             else
-                let verticalPlacementArray = checkTiles boardState coords 1 (List.length word - 1) false
+                let verticalPlacementArray = checkTiles coords 1 (List.length word - 1) false
                 if(Array.length verticalPlacementArray = (List.length word - 1)) then
                     verticalPlacementArray
                 else [| |]
@@ -282,7 +286,7 @@
                         findNextPiece (acc + 1) d
                     else
                         output <- words :: output
-                        let idk = (lookForViableMove coords (fst words|> Seq.toList |> List.ofSeq) boardState (-7, -7) (7, 7))
+                        let idk = (lookForViableMove coords (fst words|> Seq.toList |> List.ofSeq) boardState (-7, -7) (7, 7) true)
                         //System.Console.WriteLine(idk)
                         let secondElementParts = snd words
                         let secondElementParts = secondElementParts.Split(' ', '\n')
@@ -364,8 +368,10 @@
     module Scrabble =
         open System.Threading
         let playGame cstream pieces (st : State.state) =
-            let rec aux (st : State.state) acc = 
-                if (State.playerTurn st = State.playerNumber st) then
+            let rec aux (st : State.state) = 
+                if (((State.playerTurn st - 1u) % State.numPlayers st) + 1u = State.playerNumber st) then
+                    Thread.Sleep(3000)
+
                     Print.printHand pieces (st.hand)
                     Thread.Sleep(1000)
                     //Used to test bot finding first word
@@ -391,16 +397,10 @@
                         else
                             send cstream (SMPlay (RegEx.parseMove (secondMove)))
 
-                    let mutable newTurn = (State.playerTurn st) + 1u
-                    if(newTurn = (State.numPlayers st) + 1u) then
-                        newTurn <- 1u
-
                 let msg = recv cstream
     //            debugPrint (sprintf "Player %d <- Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
 
-                let mutable newTurn = (State.playerTurn st) + 1u
-                if(newTurn = (State.numPlayers st) + 1u) then
-                    newTurn <- 1u
+                let newTurn = (State.playerTurn st) + 1u
 
                 match msg with
                 | RCM (CMPlaySuccess(ms, points, newPieces)) ->
@@ -423,28 +423,28 @@
 
 
                     //let st' = State.mkState st.playerNumber added newBoardState st.numPlayers st.words st.board st.playerTurn
-                    aux st' (acc+1)
+                    aux st'
                 | RCM (CMPlayed (pid, ms, points)) ->
                     (* Successful play by other player. Update your state *)
                     let newBoardState = List.fold (fun acc elm -> Map.add(fst elm) (snd(snd elm)) acc) st.boardState ms
                     let st' = State.mkState st.playerNumber st.hand newBoardState st.numPlayers st.board newTurn st.dict
-                    aux st' (acc+1)
+                    aux st'
                 | RCM (CMPlayFailed (pid, ms)) ->
                     (* Failed play. Update your state *)
                     let st' = State.mkState st.playerNumber st.hand st.boardState st.numPlayers st.board newTurn st.dict
-                    aux st' (acc+1)
+                    aux st' 
                 | RCM (CMPassed (pid)) ->
                     let st' = State.mkState st.playerNumber st.hand st.boardState st.numPlayers st.board newTurn st.dict
-                    aux st' (acc + 1)
+                    aux st'
 
                 | RCM (CMGameOver _) -> ()
                 | RCM a -> failwith (sprintf "not implmented: %A" a)
                 | RGPE err ->
                     printfn "Gameplay Error:\n%A" err;
                     let st' = State.mkState st.playerNumber st.hand st.boardState st.numPlayers st.board newTurn st.dict
-                    aux st' (acc + 1)
+                    aux st' 
 
-            aux st 0
+            aux st
 
         let startGame
                 (boardP : boardProg)
