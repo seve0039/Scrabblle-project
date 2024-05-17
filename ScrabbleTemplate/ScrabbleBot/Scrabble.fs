@@ -418,17 +418,6 @@
                     let allPerms = BotLogic.permute letters
                     let playableWords = BotLogic.iterateOverList allPerms
                     let mapValues = BotLogic.getCharValuesMap st.hand pieces
-                    let mutable input = ""
-                    if (st.boardState.IsEmpty) then 
-                        //input <- System.Console.ReadLine()
-                        input <- BotLogic.makeFirstMove playableWords mapValues
-                        
-                    else
-                        //Console.WriteLine (BotLogic.secondMove st.hand st.boardState pieces st.dict)
-                        input <- BotLogic.secondMove st.hand st.boardState pieces st.dict
-                    let move = RegEx.parseMove input
-
-
 
                     if (st.boardState.IsEmpty) then
                         send cstream (SMPlay (RegEx.parseMove (BotLogic.makeFirstMove playableWords mapValues)))
