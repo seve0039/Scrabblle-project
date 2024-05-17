@@ -21,102 +21,94 @@
             (List.map (fun elm -> (Map.find (elm) pieces).ToString() |> getCharFromString)) list
             //(Map.find (optionToVal list) pieces).ToString() |> getCharFromString
 
-        let getCharValues (hand : MultiSet.MultiSet<uint32>) (pieces : Map<uint32,'a>) =
-            let handToList = MultiSet.toList hand
-            let mutable pointList = []
-            let charList = (List.map (fun elm -> (Map.find (elm) pieces).ToString() |> getCharFromString)) handToList
-            //System.Console.WriteLine(charList)
-            let pointSet =List.map (fun elm -> (Map.find (elm) pieces) ) handToList
-
-            //For every set in pointSet, get the 2nd element, which is the default point a letter rewards
-            for newSet in pointSet do
-                let mutable count = 1
-                let setLegnth = Set.count newSet
-                if setLegnth > 1 then
-                    pointList <- 0 :: pointList
-                else
-                    for elem in newSet do
-                        count <- count + 1
-                        if count % 2 = 0 then
-                            pointList <- snd elem :: pointList
-            //Lists are in reverse order for some reason? So reverse reverse them to good order
-            let pointList = List.rev pointList
-            let listLength = List.length charList
-
-            let mutable wordValueMap = Map.empty<string,string>
-            let mutable moveList = []
-
-            //Get every element of each list, convert them to string, combine them and add them to the new list
-            for i in 0 .. listLength-1 do 
-                let mutable idString = ""
-                match pointList[i].ToString() with
-                | "0" -> 
-                    idString <- "0"
-                    ()
-                | other -> 
-                    idString <- handToList[i].ToString()
-                    ()
-
-                let charString = charList[i].ToString()
-                let pointString = pointList[i].ToString()      
-                let moveString = idString + charString + pointString
-                moveList <- moveString :: moveList
-                wordValueMap <- Map.add charString moveString wordValueMap
-                ()
-
-            //Reverse again
-            let moveList = List.rev moveList
-            //System.Console.WriteLine(moveList)
-            moveList
-        let getCharValuesMap (hand : MultiSet.MultiSet<uint32>) (pieces : Map<uint32,'a>) =
+        let getCharValues (hand : MultiSet.MultiSet<uint32>) (pieces : Map<uint32, 'a>) =
             let handToList = MultiSet.toList hand
 
-            let mutable pointList = []
-            let charList = (List.map (fun elm -> (Map.find (elm) pieces).ToString() |> getCharFromString)) handToList
+            let charList = List.map (fun elm -> (Map.find elm pieces).ToString() |> getCharFromString) handToList
 
-            let pointSet =List.map (fun elm -> (Map.find (elm) pieces) ) handToList
+            let pointSet = List.map (fun elm -> Map.find elm pieces) handToList
 
+            let rec buildPointList acc pointSets =
+                match pointSets with
+                | [] -> List.rev acc
+                | newSet :: tail ->
+                    let setLength = Set.count newSet
+                    if setLength > 1 then
+                        buildPointList (0 :: acc) tail
+                    else
+                        let points = Set.fold (fun (acc, count) elem -> 
+                            let count = count + 1
+                            if count % 2 = 0 then (snd elem :: acc, count) else (acc, count)) (acc, 1) newSet |> fst
+                        buildPointList points tail
 
-            //For every set in pointSet, get the 2nd element, which is the default point a letter rewards
-            for newSet in pointSet do
-                let mutable count = 1
-                let setLegnth = Set.count newSet
-                if setLegnth > 1 then
-                    pointList <- 0 :: pointList
-                else
-                    for elem in newSet do
-                        count <- count + 1
-                        if count % 2 = 0 then
-                            pointList <- snd elem :: pointList
+            let pointList = buildPointList [] pointSet
 
-            //Lists are in reverse order for some reason? So reverse reverse them to good order
-            let pointList = List.rev pointList
             let listLength = List.length charList
 
-            let mutable wordValueMap = Map.empty<string,string>
-            let mutable moveList = []
-            //Get every element of each list, convert them to string, combine them and add them to the new list
-            for i in 0 .. listLength-1 do 
-                let mutable moveString = ""
-                let mutable idString = ""
-                match pointList[i].ToString() with
-                | "0" -> 
-                    idString <- "0"
-                    ()
-                | other -> 
-                    idString <- handToList[i].ToString()
-                    ()
+            let rec buildMoveListAndMap idx moveList wordValueMap =
+                if idx >= listLength then
+                    (List.rev moveList, wordValueMap)
+                else
+                    let idString =
+                        match pointList.[idx].ToString() with
+                        | "0" -> "0"
+                        | _ -> handToList.[idx].ToString()
+                    
+                    let charString = charList.[idx].ToString()
+                    let pointString = pointList.[idx].ToString()
+                    let moveString = idString + charString + pointString
 
-                let charString = charList[i].ToString()
-                let pointString = pointList[i].ToString()      
-                moveString <- idString + charString + pointString
-                moveList <- moveString :: moveList
-                wordValueMap <- Map.add charString moveString wordValueMap
-                ()
+                    let updatedMoveList = moveString :: moveList
+                    let updatedWordValueMap = Map.add charString moveString wordValueMap
 
-            //Reverse again
-            let moveList = List.rev moveList
-            wordValueMap
+                    buildMoveListAndMap (idx + 1) updatedMoveList updatedWordValueMap
+
+            let (finalMoveList, _) = buildMoveListAndMap 0 [] Map.empty
+
+            finalMoveList
+
+        let getCharValuesMap (hand : MultiSet.MultiSet<uint32>) (pieces : Map<uint32, 'a>) =
+            let handToList = MultiSet.toList hand
+
+            let charList = List.map (fun elm -> (Map.find elm pieces).ToString() |> getCharFromString) handToList
+
+            let pointSet = List.map (fun elm -> Map.find elm pieces) handToList
+
+            let rec buildPointList acc pointSets =
+                match pointSets with
+                | [] -> List.rev acc
+                | newSet :: tail ->
+                    let setLength = Set.count newSet
+                    if setLength > 1 then
+                        buildPointList (0 :: acc) tail
+                    else
+                        let points = Set.fold (fun (acc, count) elem -> 
+                            let count = count + 1
+                            if count % 2 = 0 then (snd elem :: acc, count) else (acc, count)) (acc, 1) newSet |> fst
+                        buildPointList points tail
+
+            let pointList = buildPointList [] pointSet
+
+            let listLength = List.length charList
+
+            let rec buildMaps idx moveList wordValueMap =
+                if idx >= listLength then
+                    (List.rev moveList, wordValueMap)
+                else
+                    let idString, moveString =
+                        match pointList.[idx].ToString() with
+                        | "0" -> "0", "0" + charList.[idx].ToString() + pointList.[idx].ToString()
+                        | _ -> handToList.[idx].ToString(), handToList.[idx].ToString() + charList.[idx].ToString() + pointList.[idx].ToString()
+                    
+                    let updatedMoveList = moveString :: moveList
+                    let updatedWordValueMap = Map.add (charList.[idx].ToString()) moveString wordValueMap
+
+                    buildMaps (idx + 1) updatedMoveList updatedWordValueMap
+
+            let (_, finalWordValueMap) = buildMaps 0 [] Map.empty
+
+            finalWordValueMap
+
         let rec permuteTwo (prefix: string) (chars: string list) =
             let rec permuteHelper (chars: string list) len =
                 match len with
@@ -283,17 +275,15 @@
 
         let lookupLst lst =
             let rec lookupWords accResults = function
-
                 | [] -> 
                     accResults
                 | t :: tail ->
-
-                    let mutable isWord = false
                     let newWord = (fst t).ToString()
-                    if newWord[0] = newWord[newWord.Length - 1] then      
-                        isWord <- false
-                    else
-                        isWord <- lookup (fst t) (dict false)
+                    let isWord = 
+                        if newWord[0] = newWord[newWord.Length - 1] then      
+                            false
+                        else
+                            lookup (fst t) (dict false)
                     match isWord with
                     | true -> lookupWords (t :: accResults) tail
                     | false -> lookupWords accResults tail
@@ -301,8 +291,8 @@
             let results = lookupWords [] lst
             match results with
             | [] -> ("", "")
-            | hd :: _ -> 
-                hd
+            | hd :: _ -> hd
+
 
 
         let makeFirstMove (playableWords : string List) (wordsMapValue : Map<string,string>) =
