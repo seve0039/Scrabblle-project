@@ -2,6 +2,7 @@
 
     open ScrabbleUtil
     open ScrabbleUtil.ServerCommunication
+    open ScrabbleLib
 
     open System.IO
     open System
@@ -157,7 +158,7 @@
             | Some (c, _) -> c
             | None -> '0'
             
-        let lookForViableMove coords word boardState topLeftCoords bottomRightCoords =
+        let lookForViableMove coords word boardState parser =
             let nextPos = 
                 if(readTile boardState (fst coords) (snd coords) = (List.head word)) then 1
                 else -1
@@ -168,7 +169,7 @@
                 let y =
                     if horizontal then (snd coords)
                     else (snd coords) + index * nextPos
-                if topLeftCoords <> (0, 0) && bottomRightCoords <> (0, 0) && (x > fst bottomRightCoords || x < fst topLeftCoords || y > snd bottomRightCoords || y < snd topLeftCoords) then
+                if not (parser (x, y)) then
                     [| |]
                 elif readTile boardState x y = '0' then
                     if horizontal then
@@ -310,7 +311,7 @@
             resultString
 
             
-        let secondMove (hand) (boardState : Map<coord, (char * int)>) (pieces : Map<uint32, tile>) d = 
+        let secondMove (hand) (boardState : Map<coord, (char * int)>) (pieces : Map<uint32, tile>) d parser = 
             let boardChars = getAllCharacters boardState
             let inHand = getCharValues hand pieces
 
@@ -324,7 +325,7 @@
                     if words = ("","") then
                         findNextPiece (acc + 1) d
                     else
-                        let idk = (lookForViableMove coords (fst words|> Seq.toList |> List.ofSeq) boardState (-10000, -1000) (1000, 10000))
+                        let idk = (lookForViableMove coords (fst words|> Seq.toList |> List.ofSeq) boardState parser)
                         let secondElementParts = snd words
                         let secondElementParts = secondElementParts.Split(' ', '\n')
                         let secondElementParts = secondElementParts[1..]
@@ -401,7 +402,7 @@
 
     module Scrabble =
         open System.Threading
-        let playGame cstream pieces (st : State.state) =
+        let playGame cstream pieces (st : State.state) parser =
             let rec aux (st : State.state) = 
                 if (((State.playerTurn st - 1u) % State.numPlayers st) + 1u = State.playerNumber st) then
 
@@ -421,7 +422,7 @@
 
                             send cstream (SMPlay (RegEx.parseMove (firstMove)))
                     else 
-                        let secondMove = BotLogic.secondMove st.hand st.boardState pieces st.dict
+                        let secondMove = BotLogic.secondMove st.hand st.boardState pieces st.dict parser
                         if secondMove = ""then  
                             send cstream (SMPass)
                         else
@@ -495,8 +496,9 @@
             //let dict = dictf true // Uncomment if using a gaddag for your dictionary
             let dict = dictf false // Uncomment if using a trie for your dictionary
             
+            let parser = ScrabbleLib.simpleBoardLangParser.parseSimpleBoardProg boardP
             let board = Parser.mkBoard boardP
 
             let handSet = List.fold (fun acc (x, k) -> MultiSet.add x k acc) MultiSet.empty hand
 
-            fun () -> playGame cstream tiles (State.mkState playerNumber handSet Map.empty numPlayers boardP playerTurn dict)
+            fun () -> playGame cstream tiles (State.mkState playerNumber handSet Map.empty numPlayers boardP playerTurn dict) parser

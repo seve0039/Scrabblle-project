@@ -27,6 +27,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="ScrabbleLib, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\dlls\ScrabbleLib.dll</HintPath>
+    </Reference>
     <Reference Include="ScrabbleUtil, Culture=neutral, PublicKeyToken=null">
       <HintPath>..\dlls\ScrabbleUtil.dll</HintPath>
     </Reference>
