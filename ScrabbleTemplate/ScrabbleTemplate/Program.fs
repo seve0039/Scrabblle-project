@@ -24,8 +24,8 @@ let main argv =
     System.Console.ForegroundColor <- System.ConsoleColor.Black
     System.Console.Clear()
 
-    let board        = ScrabbleUtil.StandardBoard.standardBoard ()
-    //let board      = ScrabbleUtil.InfiniteBoard.infiniteBoard ()
+    //let board        = ScrabbleUtil.StandardBoard.standardBoard ()
+    let board      = ScrabbleUtil.InfiniteBoard.infiniteBoard ()
 
 //    let board      = ScrabbleUtil.RandomBoard.randomBoard ()
 //    let board      = ScrabbleUtil.RandomBoard.randomBoardSeed (Some 42)
@@ -57,7 +57,7 @@ let main argv =
     let players    = [("Rubert",dictionary, Rubert.Scrabble.startGame);("Lene",dictionary, Rubert.Scrabble.startGame)]
     //let players    = [("Player1", dictionary, Rubert.Scrabble.startGame);("Player2", dictionary, Rubert.Scrabble.startGame)]
 
-    //let players = spawnMultiples "OxyphenButazone" dictionary Oxyphenbutazone.Scrabble.startGame 2
+    //let players = spawnMultiples "OxyphenButazone" dictionary Oxyphenbutazone.Scrabble.startGame 1 @ [ ("Rubert", dictionary, Rubert.Scrabble.startGame)]
     do ScrabbleServer.Comm.startGame 
           board dictionary handSize timeout tiles seed port players
     

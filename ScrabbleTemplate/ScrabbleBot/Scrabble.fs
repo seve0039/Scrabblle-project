@@ -19,7 +19,6 @@
         let getCharsInHand (hand : MultiSet.MultiSet<uint32>) (pieces : Map<uint32,'a>) =
             let list = MultiSet.toList hand
             (List.map (fun elm -> (Map.find (elm) pieces).ToString() |> getCharFromString)) list
-            //(Map.find (optionToVal list) pieces).ToString() |> getCharFromString
 
         let getCharValues (hand : MultiSet.MultiSet<uint32>) (pieces : Map<uint32, 'a>) =
             let handToList = MultiSet.toList hand
@@ -296,13 +295,18 @@
 
 
         let makeFirstMove (playableWords : string List) (wordsMapValue : Map<string,string>) =
+            
             let resultString =
-                playableWords.[0]
-                |> Seq.mapi (fun i char ->
-                    match Map.tryFind (string char) wordsMapValue with
-                    | Some(value) -> $" 0 {i} {value}"
-                    | _ -> "")
-                |> String.concat ""
+                if List.length playableWords = 0 then
+                    ""
+                else
+                    Console.WriteLine(playableWords)
+                    playableWords.[0]
+                    |> Seq.mapi (fun i char ->
+                        match Map.tryFind (string char) wordsMapValue with
+                        | Some(value) -> $" 0 {i} {value}"
+                        | _ -> "")
+                    |> String.concat "" 
             resultString
 
             
@@ -312,7 +316,7 @@
 
             let rec findNextPiece  acc d =
                 if acc >= List.length boardChars then
-                    ""//TODO pass turn
+                    ""//TODO redraw hand
                 else 
                 match boardChars[acc] with
                 | (coords, char) -> 
@@ -320,7 +324,7 @@
                     if words = ("","") then
                         findNextPiece (acc + 1) d
                     else
-                        let idk = (lookForViableMove coords (fst words|> Seq.toList |> List.ofSeq) boardState (-7, -7) (7, 7))
+                        let idk = (lookForViableMove coords (fst words|> Seq.toList |> List.ofSeq) boardState (-10000, -1000) (1000, 10000))
                         let secondElementParts = snd words
                         let secondElementParts = secondElementParts.Split(' ', '\n')
                         let secondElementParts = secondElementParts[1..]
@@ -408,9 +412,14 @@
                     let allPerms = BotLogic.permute letters
                     let playableWords = BotLogic.iterateOverList allPerms
                     let mapValues = BotLogic.getCharValuesMap st.hand pieces
-
+                    
                     if (st.boardState.IsEmpty) then
-                        send cstream (SMPlay (RegEx.parseMove (BotLogic.makeFirstMove playableWords mapValues)))
+                        let firstMove = BotLogic.makeFirstMove playableWords mapValues
+                        if (firstMove = "") then
+                            send cstream (SMPass)
+                        else 
+
+                            send cstream (SMPlay (RegEx.parseMove (firstMove)))
                     else 
                         let secondMove = BotLogic.secondMove st.hand st.boardState pieces st.dict
                         if secondMove = ""then  
@@ -431,8 +440,6 @@
                     //System.Console.WriteLine(ms)
                     let addNewLetters = List.fold (fun acc elm -> MultiSet.add (fst elm) (snd elm) acc) removedPlayedLetters newPieces
                     //System.Console.WriteLine("ADDED::::::::::.")
-                    let newSet = MultiSet.empty
-                    let newPiecesMultiSet = List.fold (fun acc elm -> MultiSet.add (fst elm) (snd elm) acc) newSet newPieces
                     //Print.printHand pieces (newPiecesMultiSet)
 
                     let newBoardState = List.fold (fun acc elm -> Map.add(fst elm) (snd(snd elm)) acc) st.boardState ms
