@@ -213,8 +213,7 @@
                         else [| |]
                 else 
                     [| |]
-
-
+        
             let horizontalPlacementArray = checkTiles 1 (List.length word - 1) true
             if(Array.length horizontalPlacementArray = (List.length word - 1)) then
                 horizontalPlacementArray
@@ -292,20 +291,26 @@
 
 
 
-        let makeFirstMove (playableWords : string List) (wordsMapValue : Map<string,string>) =
+        let makeFirstMove (playableWords : string List) (wordsMapValue : Map<string,string>) (boardProg:boardProg) (boardState:Map<coord, (char * int)>) parser=
             
-            let resultString =
-                if List.length playableWords = 0 then
+            let rec resultString acc =
+                if List.length playableWords = 0 || acc = playableWords.Length then
                     ""
                 else
                     Console.WriteLine(playableWords)
-                    playableWords.[0]
-                    |> Seq.mapi (fun i char ->
-                        match Map.tryFind (string char) wordsMapValue with
-                        | Some(value) -> $" 0 {i} {value}"
-                        | _ -> "")
-                    |> String.concat "" 
-            resultString
+                    let viableMove = lookForViableMove boardProg.center (playableWords.[acc]|>Seq.toList) boardState parser
+                    if viableMove.Length = 0 then
+                        resultString (acc + 1)
+                    else
+                        playableWords.[acc]
+                        |> Seq.mapi (fun i char ->
+                            match Map.tryFind (string char) wordsMapValue with
+                            | Some(value) -> 
+                            printfn "%A" $"{fst viableMove[i]} {snd viableMove[i]} {value}"
+                            $" {fst viableMove[i]} {snd viableMove[i]} {value}"
+                            | _ -> "")
+                        |> String.concat "" 
+            resultString 0
 
             
         let secondMove (hand) (boardState : Map<coord, (char * int)>) (pieces : Map<uint32, tile>) d parser = 
@@ -403,7 +408,8 @@
         let playGame cstream pieces (st : State.state) parser =
             let rec aux (st : State.state) = 
                 if (((State.playerTurn st - 1u) % State.numPlayers st) + 1u = State.playerNumber st) then
-
+                    Thread.Sleep(3000)
+                    printf "%A\n" st.board.center
                     Print.printHand pieces (st.hand)
 
                     //Used to test bot finding first word
@@ -413,7 +419,7 @@
                     let mapValues = BotLogic.getCharValuesMap st.hand pieces
                     
                     if (st.boardState.IsEmpty) then
-                        let firstMove = BotLogic.makeFirstMove playableWords mapValues
+                        let firstMove = BotLogic.makeFirstMove playableWords mapValues st.board st.boardState parser
                         if (firstMove = "") then
                             send cstream (SMPass)
                         else 
@@ -493,7 +499,6 @@
 
             //let dict = dictf true // Uncomment if using a gaddag for your dictionary
             let dict = dictf false // Uncomment if using a trie for your dictionary
-            
             let parser = ScrabbleLib.simpleBoardLangParser.parseSimpleBoardProg boardP
             let board = Parser.mkBoard boardP
 
