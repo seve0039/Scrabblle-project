@@ -2,7 +2,6 @@
 
     open ScrabbleUtil
     open ScrabbleUtil.ServerCommunication
-    open ScrabbleLib
 
     open System.IO
     open System
@@ -13,8 +12,6 @@
     module BotLogic =
         open System.Threading
         open ScrabbleUtil.Dictionary
-        
-        let dict = mkDict (File.ReadLines "Dictionaries/English.txt") None 
 
         let getCharFromString = fun (s : string) -> s.[6]
         let getCharsInHand (hand : MultiSet.MultiSet<uint32>) (pieces : Map<uint32,'a>) =
@@ -237,12 +234,12 @@
                     let newStep = step myString[indexTracker] dict // This line ensures the computation is done
                     recursiveStep newStep myString (indexTracker+1)
             | None -> None
-        let iterateOverList(wordList : list<string>) =
+        let iterateOverList(wordList : list<string>) dict =
             let rec iterate (words : string list) acc =
                 match words with
                 | [] -> acc
                 | str :: rest ->
-                    let initialRecu = step str.[0] (dict false)
+                    let initialRecu = step str.[0] (dict)
                     let boolTester = recursiveStep initialRecu str 1
                     let updatedAcc =
                         match boolTester with
@@ -273,7 +270,7 @@
             
             processLists [] lst
 
-        let lookupLst lst =
+        let lookupLst lst dict =
             let rec lookupWords accResults = function
                 | [] -> 
                     accResults
@@ -283,7 +280,7 @@
                         if newWord[0] = newWord[newWord.Length - 1] then      
                             false
                         else
-                            lookup (fst t) (dict false)
+                            lookup (fst t) (dict)
                     match isWord with
                     | true -> lookupWords (t :: accResults) tail
                     | false -> lookupWords accResults tail
@@ -321,12 +318,13 @@
                 else 
                 match boardChars[acc] with
                 | (coords, char) -> 
-                    let words =permuteTwo (char.ToString()) inHand |> concatList |> lookupLst
-                    if words = ("","") then
+                    let words =permuteTwo (char.ToString()) inHand |> concatList
+                    let lookedUpList = lookupLst words d
+                    if lookedUpList = ("","") then
                         findNextPiece (acc + 1) d
                     else
-                        let idk = (lookForViableMove coords (fst words|> Seq.toList |> List.ofSeq) boardState parser)
-                        let secondElementParts = snd words
+                        let idk = (lookForViableMove coords (fst lookedUpList|> Seq.toList |> List.ofSeq) boardState parser)
+                        let secondElementParts = snd lookedUpList
                         let secondElementParts = secondElementParts.Split(' ', '\n')
                         let secondElementParts = secondElementParts[1..]
                         //printfn "%A" secondElementParts
@@ -342,7 +340,7 @@
                         else
                             findNextPiece (acc + 1) d
                         //coords.ToString() + output.ToString()
-            findNextPiece 0 (dict)
+            findNextPiece 0 d
         
 
 
@@ -411,7 +409,7 @@
                     //Used to test bot finding first word
                     let letters =String.Concat(BotLogic.getCharsInHand st.hand pieces)
                     let allPerms = BotLogic.permute letters
-                    let playableWords = BotLogic.iterateOverList allPerms
+                    let playableWords = BotLogic.iterateOverList allPerms st.dict
                     let mapValues = BotLogic.getCharValuesMap st.hand pieces
                     
                     if (st.boardState.IsEmpty) then

@@ -1,4 +1,4 @@
-module internal Dict
+module Dict
 
 open System.Collections.Generic
 
@@ -25,6 +25,18 @@ let rec insert (s : string) (trie : Dict) =
             trieNode
 
     insertHelper s trie 0
+
+let rec insertMany (lines : string seq) (d: Dict) =
+    let rec insertAll (lines: string seq) (trie: Dict) =
+        match Seq.tryHead lines with
+        | None -> trie // Base case: No more lines to insert, return the trie
+        | Some l ->
+            let updatedTrie = insert l trie // Insert the current line into the trie
+            insertAll (Seq.skip 1 lines) updatedTrie // Recursively insert remaining lines
+
+    let trieAcc = insertAll lines d // Recursively insert all lines into a new trie
+    printf "Done!"
+    trieAcc // Return the final trie
 
 let rec lookup (s : string) (trie : Dict) =
     let rec lookupHelper (s : string) (trieNode : Dict) (index : int) =

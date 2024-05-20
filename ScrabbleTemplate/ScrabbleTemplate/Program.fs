@@ -1,4 +1,7 @@
-﻿// Learn more about F# at http://fsharp.org
+﻿module main
+
+open Dict
+// Learn more about F# at http://fsharp.org
 
 let time f =
     let start = System.DateTime.Now
@@ -24,8 +27,8 @@ let main argv =
     System.Console.ForegroundColor <- System.ConsoleColor.Black
     System.Console.Clear()
 
-    //let board        = ScrabbleUtil.StandardBoard.standardBoard ()
-    let board      = ScrabbleUtil.InfiniteBoard.infiniteBoard ()
+    let board        = ScrabbleUtil.StandardBoard.standardBoard ()
+    //let board      = ScrabbleUtil.InfiniteBoard.infiniteBoard ()
 
 //    let board      = ScrabbleUtil.RandomBoard.randomBoard ()
 //    let board      = ScrabbleUtil.RandomBoard.randomBoardSeed (Some 42)
@@ -45,8 +48,8 @@ let main argv =
 
     let dictAPI =
         // Uncomment if you have implemented a dictionary. last element None if you have not implemented a GADDAG
-        // Some (Dictionary.empty, Dictionary.insert, Dictionary.step, Some Dictionary.reverse) 
-        None
+         Some (Dict.empty, Dict.insert, Dict.step, None) 
+        //None
         
     // Uncomment this line to call your client
     
