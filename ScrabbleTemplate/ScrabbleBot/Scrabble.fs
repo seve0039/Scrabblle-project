@@ -419,7 +419,7 @@
         let playGame cstream pieces (st : State.state) parser =
             let rec aux (st : State.state) = 
                 if (((State.playerTurn st - 1u) % State.numPlayers st) + 1u = State.playerNumber st) then
-                    Thread.Sleep(3000)
+//                    Thread.Sleep(3000)
                     printf "%A\n" st.board.center
                     Print.printHand pieces (st.hand)
 
