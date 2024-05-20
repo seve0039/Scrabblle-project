@@ -308,7 +308,7 @@
                 if List.length playableWords = 0 || acc = playableWords.Length then
                     ""
                 else
-                    Console.WriteLine(playableWords)
+                    // Console.WriteLine(playableWords)
                     let viableMove = lookForViableMove boardProg.center (playableWords.[acc]|>Seq.toList) boardState parser
                     if viableMove.Length = 0 then
                         resultString (acc + 1)
