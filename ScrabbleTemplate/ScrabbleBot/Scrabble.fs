@@ -214,14 +214,24 @@
                 else 
                     [| |]
         
-            let horizontalPlacementArray = checkTiles 1 (List.length word - 1) true
-            if(Array.length horizontalPlacementArray = (List.length word - 1)) then
-                horizontalPlacementArray
+            if boardState.IsEmpty then
+                let horizontalPlacementArray = checkTiles 0 (List.length word) true
+                if(Array.length horizontalPlacementArray = (List.length word)) then
+                    horizontalPlacementArray
+                else
+                    let verticalPlacementArray = checkTiles 0 (List.length word) false
+                    if(Array.length verticalPlacementArray = (List.length word)) then
+                        verticalPlacementArray
+                    else [| |]
             else
-                let verticalPlacementArray = checkTiles 1 (List.length word - 1) false
-                if(Array.length verticalPlacementArray = (List.length word - 1)) then
-                    verticalPlacementArray
-                else [| |]
+                let horizontalPlacementArray = checkTiles 1 (List.length word - 1) true
+                if(Array.length horizontalPlacementArray = (List.length word - 1)) then
+                    horizontalPlacementArray
+                else
+                    let verticalPlacementArray = checkTiles 1 (List.length word - 1) false
+                    if(Array.length verticalPlacementArray = (List.length word - 1)) then
+                        verticalPlacementArray
+                    else [| |]
 
         let rec recursiveStep (nextStep : option<bool * Dict>) (myString : string)  (indexTracker : int) =      
 
@@ -297,7 +307,6 @@
                 if List.length playableWords = 0 || acc = playableWords.Length then
                     ""
                 else
-                    Console.WriteLine(playableWords)
                     let viableMove = lookForViableMove boardProg.center (playableWords.[acc]|>Seq.toList) boardState parser
                     if viableMove.Length = 0 then
                         resultString (acc + 1)
